@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pandy Type</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #6ec6ff 0%, #dff6ff 100%);
+      overflow: hidden;
+      color: #1f2937;
+    }
+
+    #game {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sky {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, #7dd3fc 0%, #dbeafe 70%, #86efac 100%);
+    }
+
+    .cloud {
+      position: absolute;
+      background: rgba(255,255,255,0.9);
+      border-radius: 50px;
+      filter: blur(0.3px);
+    }
+
+    .cloud::before,
+    .cloud::after {
+      content: "";
+      position: absolute;
+      background: rgba(255,255,255,0.9);
+      border-radius: 50%;
+    }
+
+    .cloud::before {
+      width: 60%;
+      height: 100%;
+      left: 10%;
+      top: -35%;
+    }
+
+    .cloud::after {
+      width: 45%;
+      height: 75%;
+      right: 12%;
+      top: -20%;
+    }
+
+    .ground {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 120px;
+      background: #22c55e;
+      border-top: 5px solid #166534;
+    }
+
+    #player {
+      position: absolute;
+      bottom: 120px;
+      left: 80px;
+      width: 90px;
+      height: 90px;
+      border-radius: 20px;
+      background: #fbbf24;
+      border: 5px solid #92400e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      transition: transform 0.08s;
+      z-index: 10;
+    }
+
+    #player.jump {
+      transform: translateY(-14px) scale(1.05);
+    }
+
+    .enemy {
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      border-radius: 20px;
+      background: #f87171;
+      border: 5px solid #7f1d1d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      font-weight: bold;
+      color: white;
+      box-shadow: 0 6px 10px rgba(0,0,0,0.2);
+      z-index: 5;
+    }
+
+    .enemy .letter {
+      font-size: 42px;
+      line-height: 1;
+    }
+
+    .enemy .hint {
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    #hud {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      display: flex;
+      gap: 14px;
+      z-index: 20;
+      flex-wrap: wrap;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.92);
+      padding: 12px 18px;
+      border-radius: 18px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-weight: bold;
+      min-width: 120px;
+    }
+
+    #messageBox {
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.95);
+      border-radius: 20px;
+      padding: 18px 26px;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.2);
+      z-index: 30;
+      text-align: center;
+      max-width: 600px;
+    }
+
+    #messageBox h1 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 36px;
+    }
+
+    #messageBox p {
+      font-size: 18px;
+      line-height: 1.4;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 14px 22px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      transition: transform 0.15s;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    #typingGuide {
+      position: fixed;
+      bottom: 130px;
+      right: 20px;
+      width: 340px;
+      background: rgba(255,255,255,0.92);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+      z-index: 200;
+      cursor: move;
+      user-select: none;
+    }
+
+    #typingGuide h3 {
+      margin: 0 0 10px;
+    }
+
+    .keyboardRow {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-bottom: 6px;
+    }
+
+    .key {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      transition: all 0.1s;
+    }
+
+    .key.active {
+      background: #facc15;
+      transform: scale(1.15);
+    }
+
+    .key.correct {
+      background: #4ade80;
+    }
+
+    .explosion {
+      position: absolute;
+      font-size: 42px;
+      pointer-events: none;
+      animation: pop 0.6s ease-out forwards;
+      z-index: 50;
+    }
+
+    @keyframes pop {
+      0% {
+        opacity: 1;
+        transform: scale(0.5);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-50px) scale(1.8);
+      }
+    }
+
+    #comboMeter {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: rgba(255,255,255,0.92);
+      padding: 14px 20px;
+      border-radius: 18px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 20;
+      text-align: center;
+    }
+
+    #comboText {
+      font-size: 26px;
+      font-weight: bold;
+      color: #dc2626;
+    }
+
+    #footerTips {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #064e3b;
+      z-index: 20;
+      background: rgba(255,255,255,0.8);
+      padding: 10px 18px;
+      border-radius: 16px;
+    }
+
+    @media (max-width: 900px) {
+      #typingGuide {
+        width: 92%;
+        left: 4%;
+        right: 4%;
+        bottom: 130px;
+      }
+
+      #messageBox {
+        width: 92%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <div class="sky"></div>
+    <div class="ground"></div>
+
+    <div class="cloud" style="width:140px;height:50px;top:60px;left:100px"></div>
+    <div class="cloud" style="width:180px;height:60px;top:120px;left:420px"></div>
+    <div class="cloud" style="width:150px;height:52px;top:80px;right:160px"></div>
+
+    <div id="hud">
+      <div class="panel">⭐ Score: <span id="score">0</span></div>
+      <div class="panel">❤️ Lives: <span id="lives">5</span></div>
+      <div class="panel">⚡ WPM: <span id="wpm">0</span></div>
+      <div class="panel">🎯 Accuracy: <span id="accuracy">100%</span></div>
+      <div class="panel">🏆 Level: <span id="level">1</span></div>
+      <div class="panel">🧠 Mode: <span id="mode">Beginner</span></div>
+    </div>
+
+    <div id="comboMeter">
+      <div>Combo</div>
+      <div id="comboText">x0</div>
+    </div>
+
+    <div id="player">🐼</div>
+
+    <div id="typingGuide">
+      <h3>⌨️ Finger Guide</h3>
+      <p>Press the matching key before the critter reaches your panda hero!</p>
+      <div class="keyboardRow">
+        <div class="key">Q</div><div class="key">W</div><div class="key">E</div><div class="key">R</div><div class="key">T</div><div class="key">Y</div><div class="key">U</div><div class="key">I</div><div class="key">O</div><div class="key">P</div>
+      </div>
+      <div class="keyboardRow">
+        <div class="key">A</div><div class="key">S</div><div class="key">D</div><div class="key">F</div><div class="key">G</div><div class="key">H</div><div class="key">J</div><div class="key">K</div><div class="key">L</div>
+      </div>
+      <div class="keyboardRow">
+        <div class="key">Z</div><div class="key">X</div><div class="key">C</div><div class="key">V</div><div class="key">B</div><div class="key">N</div><div class="key">M</div>
+      </div>
+    </div>
+
+    <div id="footerTips">Home row tip: Keep your fingers resting on A S D F and J K L ;</div>
+
+    <div id="sentencePanel" style="display:none; position:absolute; left:50%; transform:translateX(-50%); top:120px; width:80%; max-width:900px; background:rgba(255,255,255,0.95); padding:18px 24px; border-radius:22px; font-size:28px; font-weight:bold; z-index:25; box-shadow:0 8px 18px rgba(0,0,0,0.18); text-align:center;">
+      <span id="sentenceText"></span>
+    </div>
+
+    <div id="messageBox">
+      <h1>🐼 Pandy Type</h1>
+      <p>
+        Help your panda hero defend the backyard from silly letter monsters!<br><br>
+        Type the correct letter quickly to zap each enemy.
+        The faster and more accurate you are, the higher your score and WPM!
+      </p>
+      <button id="startBtn">Start Adventure</button>
+    </div>
+  </div>
+
+  <script>
+    const game = document.getElementById('game');
+    const scoreEl = document.getElementById('score');
+    const livesEl = document.getElementById('lives');
+    const wpmEl = document.getElementById('wpm');
+    const accuracyEl = document.getElementById('accuracy');
+    const levelEl = document.getElementById('level');
+    const modeEl = document.getElementById('mode');
+    const comboText = document.getElementById('comboText');
+    const player = document.getElementById('player');
+    const messageBox = document.getElementById('messageBox');
+    const startBtn = document.getElementById('startBtn');
+
+    const beginnerLetters = 'asdfjklqwertyuiopzxcvbnm'.split('');
+    const advancedLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{};:,.<>/?'.split('');
+
+    let letters = [...beginnerLetters];
+    const enemyFaces = ['👾', '🐸', '🦀', '🐙', '👹', '🧟', '🐢', '🦖'];
+
+    let enemies = [];
+    let score = 0;
+    let lives = 5;
+    let combo = 0;
+    let totalTyped = 0;
+    let correctTyped = 0;
+    let gameRunning = false;
+    let sentenceMode = false;
+    let sentenceIntro = false;
+    let currentSentence = '';
+    let currentIndex = 0;
+
+    const practiceSentences = [
+      'The turtle types very fast.',
+      'Coding games are super fun!',
+      'Practice makes typing easier.',
+      'My fingers rest on the home row.',
+      'Quick brown fox jumps over the lazy dog.',
+      'Typing every day builds speed and accuracy.',
+      'The panda hero protects the keyboard kingdom.',
+      'Can you beat the next typing challenge?'
+    ];
+
+    const practiceParagraphs = [
+      'The panda hero sits at the keyboard ready to defend the digital forest. Every correct keystroke sends away a wave of silly letter monsters.',
+      'Typing is a skill that grows stronger with practice. The more you train your fingers, the faster and more accurate you become.',
+      'In the keyboard kingdom, speed and accuracy are the keys to victory. Focus on each letter and stay calm under pressure.'
+    ];
+    let spawnRate = 1700;
+    let enemySpeed = 1.3;
+    let level = 1;
+    let startTime = null;
+    let lastCorrectTime = null;
+
+    function startGame() {
+      messageBox.style.display = 'none';
+      gameRunning = true;
+      score = 0;
+      lives = 5;
+      combo = 0;
+      totalTyped = 0;
+      correctTyped = 0;
+      spawnRate = 1700;
+      enemySpeed = 1.3;
+      level = 1;
+      startTime = Date.now();
+
+      updateHUD();
+
+      enemies.forEach(e => e.el.remove());
+      enemies = [];
+
+      gameLoop();
+      spawnLoop();
+    }
+
+    function spawnEnemy() {
+      if (!gameRunning) return;
+
+      const enemy = document.createElement('div');
+      enemy.className = 'enemy';
+
+      const letter = letters[Math.floor(Math.random() * letters.length)];
+      const face = enemyFaces[Math.floor(Math.random() * enemyFaces.length)];
+
+      enemy.innerHTML = `
+        <div>${face}</div>
+        <div class="letter">${letter}</div>
+        <div class="hint">Type me!</div>
+      `;
+
+      const lane = Math.floor(Math.random() * 4);
+      const y = 160 + lane * 105;
+
+      enemy.style.top = y + 'px';
+      enemy.style.left = window.innerWidth + 'px';
+
+      game.appendChild(enemy);
+
+      enemies.push({
+        el: enemy,
+        letter,
+        x: window.innerWidth,
+        y,
+        speed: enemySpeed + Math.random() * 0.7
+      });
+    }
+
+    function gameLoop() {
+      if (!gameRunning) return;
+
+      enemies.forEach((enemy, index) => {
+        enemy.x -= enemy.speed;
+        enemy.el.style.left = enemy.x + 'px';
+
+        if (enemy.x < 130) {
+          enemy.el.remove();
+          enemies.splice(index, 1);
+          loseLife();
+        }
+      });
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    function spawnLoop() {
+      if (!gameRunning) return;
+
+      // Pause random enemy spawning during sentence mode
+      if (sentenceMode) {
+        setTimeout(() => {
+          if (gameRunning) spawnLoop();
+        }, 300);
+        return;
+      }
+
+      spawnEnemy();
+
+      setTimeout(() => {
+        if (gameRunning) spawnLoop();
+      }, spawnRate);
+    }, spawnRate);
+    }
+
+    function loseLife() {
+      combo = 0;
+      lives--;
+      updateHUD();
+
+      shakePlayer();
+
+      if (lives <= 0) {
+        endGame();
+      }
+    }
+
+    function shakePlayer() {
+      player.style.transform = 'translateX(-10px)';
+      setTimeout(() => {
+        player.style.transform = 'translateX(10px)';
+      }, 70);
+      setTimeout(() => {
+        player.style.transform = 'translateX(0px)';
+      }, 140);
+    }
+
+    function updateHUD() {
+      scoreEl.textContent = score;
+      livesEl.textContent = lives;
+      comboText.textContent = 'x' + combo;
+      levelEl.textContent = level;
+
+      const accuracy = totalTyped === 0
+        ? 100
+        : Math.round((correctTyped / totalTyped) * 100);
+
+      accuracyEl.textContent = accuracy + '%';
+
+      const minutes = (Date.now() - startTime) / 60000;
+      const wpm = minutes > 0
+        ? Math.round((correctTyped / 5) / minutes)
+        : 0;
+
+      wpmEl.textContent = wpm;
+    }
+
+    function highlightKey(letter, success) {
+      const keys = document.querySelectorAll('.key');
+
+      keys.forEach(key => {
+        if (key.textContent.toLowerCase() === letter.toLowerCase()) {
+          key.classList.add('active');
+          if (success) {
+            key.classList.add('correct');
+          }
+
+          setTimeout(() => {
+            key.classList.remove('active');
+            key.classList.remove('correct');
+          }, 240);
+        }
+      });
+    }
+
+    function popEffect(x, y) {
+      const pop = document.createElement('div');
+      pop.className = 'explosion';
+      pop.textContent = '💥';
+      pop.style.left = x + 'px';
+      pop.style.top = y + 'px';
+
+      game.appendChild(pop);
+
+      setTimeout(() => {
+        pop.remove();
+      }, 600);
+    }
+
+    function startSentenceMode() {
+      sentenceMode = true;
+      sentenceIntro = true;
+
+      const useParagraph = level >= 10;
+
+      if (useParagraph) {
+        const base = practiceParagraphs[Math.floor(Math.random() * practiceParagraphs.length)];
+        currentSentence = base;
+        modeEl.textContent = 'Paragraph Mode';
+      } else {
+        currentSentence = practiceSentences[Math.floor(Math.random() * practiceSentences.length)];
+        modeEl.textContent = 'Sentence Mode';
+      }
+
+      currentIndex = 0;
+
+      const panel = document.getElementById('sentencePanel');
+      panel.style.display = 'block';
+
+      panel.innerHTML = `<div style="font-size:22px; margin-bottom:10px; color:#1f2937;">👀 Get ready...</div><div id="sentenceText"></div>`;
+
+      setTimeout(() => {
+        sentenceIntro = false;
+        updateSentenceDisplay();
+      }, 2000);
+    }
+
+    function updateSentenceDisplay() {
+      const sentenceText = document.getElementById('sentenceText');
+
+      let html = '';
+
+      for (let i = 0; i < currentSentence.length; i++) {
+        if (i < currentIndex) {
+          html += `<span style="color:#16a34a">${currentSentence[i]}</span>`;
+        } else if (i === currentIndex) {
+          html += `<span style="background:#fde047; padding:2px 4px; border-radius:4px;">${currentSentence[i]}</span>`;
+        } else {
+          html += `<span style="color:#374151">${currentSentence[i]}</span>`;
+        }
+      }
+
+      sentenceText.innerHTML = html;
+    }
+
+    function levelUpCheck() {
+      // Level progression is slower (longer levels)
+      const nextLevel = Math.floor(score / 440) + 1;
+
+      if (nextLevel > level) {
+        level = nextLevel;
+        enemySpeed += 0.25;
+        spawnRate = Math.max(650, spawnRate - 120);
+
+        // Unlock advanced characters
+        if (level >= 4) {
+          letters = [...advancedLetters];
+          modeEl.textContent = 'Advanced';
+        }
+
+        // Sentence / Paragraph Mode ONLY starts at Level 11
+        if (level >= 11 && !sentenceMode) {
+          modeEl.textContent = 'Paragraph Mode';
+          startSentenceMode();
+        }
+
+        showLevelMessage();
+      }
+    }
+
+    function showLevelMessage() {
+      const msg = document.createElement('div');
+      msg.style.position = 'absolute';
+      msg.style.left = '50%';
+      msg.style.top = '50%';
+      msg.style.transform = 'translate(-50%, -50%)';
+      msg.style.background = 'rgba(255,255,255,0.95)';
+      msg.style.padding = '24px 36px';
+      msg.style.borderRadius = '24px';
+      msg.style.fontSize = '42px';
+      msg.style.fontWeight = 'bold';
+      msg.style.zIndex = '100';
+      msg.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)';
+      msg.textContent = '🎉 LEVEL ' + level + '!';
+
+      game.appendChild(msg);
+
+      setTimeout(() => {
+        msg.remove();
+      }, 1400);
+    }
+
+    function endGame() {
+      gameRunning = false;
+
+      const accuracy = totalTyped === 0
+        ? 100
+        : Math.round((correctTyped / totalTyped) * 100);
+
+      const minutes = (Date.now() - startTime) / 60000;
+      const wpm = minutes > 0
+        ? Math.round((correctTyped / 5) / minutes)
+        : 0;
+
+      messageBox.style.display = 'block';
+      messageBox.innerHTML = `
+        <h1>🏁 Great Job!</h1>
+        <p>
+          Final Score: <strong>${score}</strong><br>
+          Accuracy: <strong>${accuracy}%</strong><br>
+          WPM: <strong>${wpm}</strong><br>
+          Level Reached: <strong>${level}</strong><br><br>
+          Keep practicing to become a typing master! ⌨️🐼
+        </p>
+        <button id="restartBtn">Play Again</button>
+      `;
+
+      document.getElementById('restartBtn').addEventListener('click', startGame);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (sentenceMode) {
+        if (sentenceIntro) return;
+        const expected = currentSentence[currentIndex];
+
+        totalTyped++;
+
+        if (e.key === expected) {
+          correctTyped++;
+          currentIndex++;
+          combo++;
+          score += 5 + combo;
+
+          highlightKey(e.key.toLowerCase(), true);
+
+          if (currentIndex >= currentSentence.length) {
+            score += 100;
+            startSentenceMode();
+          } else {
+            updateSentenceDisplay();
+          }
+        } else {
+          combo = 0;
+          highlightKey(e.key.toLowerCase(), false);
+        }
+
+        updateHUD();
+        return;
+      }
+
+
+      if (!gameRunning) return;
+
+      const key = e.key.toLowerCase();
+
+      if (!letters.includes(key) && !letters.includes(e.key)) return;
+
+      totalTyped++;
+
+      const target = enemies.find(enemy => enemy.letter === e.key || enemy.letter === key);
+
+      if (target) {
+        correctTyped++;
+        combo++;
+
+        let speedBonus = 0;
+        if (lastCorrectTime) {
+          const delta = Date.now() - lastCorrectTime;
+          speedBonus = Math.max(0, Math.floor(50 - delta / 50));
+        }
+        lastCorrectTime = Date.now();
+
+        score += 10 + combo + speedBonus;
+
+        player.classList.add('jump');
+        setTimeout(() => player.classList.remove('jump'), 120);
+
+        popEffect(target.x, target.y);
+
+        target.el.remove();
+        enemies = enemies.filter(enemy => enemy !== target);
+
+        highlightKey(key, true);
+
+        levelUpCheck();
+      } else {
+        combo = 0;
+        highlightKey(key, false);
+      }
+
+      updateHUD();
+    });
+
+    // Make typing guide draggable
+    const typingGuide = document.getElementById('typingGuide');
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    typingGuide.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      offsetX = e.clientX - typingGuide.getBoundingClientRect().left;
+      offsetY = e.clientY - typingGuide.getBoundingClientRect().top;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      typingGuide.style.left = (e.clientX - offsetX) + 'px';
+      typingGuide.style.top = (e.clientY - offsetY) + 'px';
+      typingGuide.style.right = 'auto';
+      typingGuide.style.bottom = 'auto';
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    startBtn.addEventListener('click', startGame);
+
+    window.addEventListener('resize', () => {
+      enemies.forEach(enemy => {
+        if (enemy.x > window.innerWidth) {
+          enemy.x = window.innerWidth;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
