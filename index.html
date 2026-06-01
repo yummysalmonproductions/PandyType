@@ -4,19 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pandy Type</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sky-top: #5bb8f5;
+      --sky-bot: #c8eaff;
+      --ground: #3dba6e;
+      --ground-dark: #1e8a46;
+      --panel-bg: rgba(255,255,255,0.93);
+      --shadow: 0 4px 16px rgba(0,0,0,0.15);
+      --font-game: 'Fredoka One', cursive;
+      --font-ui: 'Nunito', sans-serif;
     }
 
     body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: linear-gradient(180deg, #6ec6ff 0%, #dff6ff 100%);
+      font-family: var(--font-ui);
+      background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bot) 75%, var(--ground) 100%);
       overflow: hidden;
-      color: #1f2937;
+      height: 100vh;
+      width: 100vw;
     }
 
+    /* ── GAME CONTAINER ── */
     #game {
       width: 100vw;
       height: 100vh;
@@ -24,770 +35,1104 @@
       overflow: hidden;
     }
 
+    /* ── SKY ── */
     .sky {
       position: absolute;
       inset: 0;
-      background: linear-gradient(180deg, #7dd3fc 0%, #dbeafe 70%, #86efac 100%);
+      background: linear-gradient(180deg, #5bb8f5 0%, #b8dcf8 65%, #8fcea0 100%);
+      pointer-events: none;
     }
 
+    /* ── CLOUDS ── */
     .cloud {
       position: absolute;
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.88);
       border-radius: 50px;
-      filter: blur(0.3px);
+      pointer-events: none;
+      animation: drift linear infinite;
     }
-
-    .cloud::before,
-    .cloud::after {
-      content: "";
+    .cloud::before, .cloud::after {
+      content: '';
       position: absolute;
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.88);
       border-radius: 50%;
     }
-
-    .cloud::before {
-      width: 60%;
-      height: 100%;
-      left: 10%;
-      top: -35%;
+    .cloud::before { width: 55%; height: 110%; left: 12%; top: -40%; }
+    .cloud::after  { width: 40%; height: 80%;  right: 14%; top: -25%; }
+    @keyframes drift {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-120vw); }
     }
 
-    .cloud::after {
-      width: 45%;
-      height: 75%;
-      right: 12%;
-      top: -20%;
-    }
-
+    /* ── GROUND ── */
     .ground {
       position: absolute;
       bottom: 0;
       width: 100%;
-      height: 120px;
-      background: #22c55e;
-      border-top: 5px solid #166534;
+      height: 115px;
+      background: var(--ground);
+      border-top: 6px solid var(--ground-dark);
     }
 
+    /* ── PLAYER ── */
     #player {
       position: absolute;
-      bottom: 120px;
-      left: 80px;
-      width: 90px;
-      height: 90px;
-      border-radius: 20px;
-      background: #fbbf24;
-      border: 5px solid #92400e;
+      bottom: 115px;
+      left: 72px;
+      width: 80px;
+      height: 80px;
+      border-radius: 18px;
+      background: #fff8e7;
+      border: 4px solid #a0522d;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 42px;
-      transition: transform 0.08s;
+      font-size: 40px;
       z-index: 10;
+      transition: transform 0.1s;
+      box-shadow: 0 6px 0 #a0522d, 0 8px 12px rgba(0,0,0,0.25);
+    }
+    #player.jump  { transform: translateY(-18px) rotate(-5deg) scale(1.08); }
+    #player.shake { animation: shake 0.25s linear; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-8px); }
+      75%      { transform: translateX(8px); }
     }
 
-    #player.jump {
-      transform: translateY(-14px) scale(1.05);
-    }
-
+    /* ── ENEMIES ── */
     .enemy {
       position: absolute;
-      width: 90px;
-      height: 90px;
-      border-radius: 20px;
-      background: #f87171;
-      border: 5px solid #7f1d1d;
+      width: 82px;
+      height: 82px;
+      border-radius: 18px;
+      background: #ff6b6b;
+      border: 4px solid #9b1c1c;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      flex-direction: column;
-      font-weight: bold;
-      color: white;
-      box-shadow: 0 6px 10px rgba(0,0,0,0.2);
+      font-family: var(--font-game);
+      color: #fff;
+      box-shadow: 0 5px 0 #9b1c1c, 0 8px 12px rgba(0,0,0,0.2);
       z-index: 5;
+      user-select: none;
+    }
+    .enemy .face   { font-size: 26px; line-height: 1; }
+    .enemy .letter { font-size: 30px; line-height: 1.1; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.35); }
+    .enemy .hint   { font-size: 10px; font-family: var(--font-ui); font-weight: 700; color: rgba(255,255,255,0.85); letter-spacing: 0.03em; }
+
+    /* Health bar on enemy */
+    .enemy-hp {
+      position: absolute;
+      bottom: -10px;
+      left: 4px;
+      right: 4px;
+      height: 5px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .enemy-hp-inner {
+      height: 100%;
+      background: #fde047;
+      border-radius: 3px;
+      transition: width 0.2s;
     }
 
-    .enemy .letter {
-      font-size: 42px;
-      line-height: 1;
-    }
-
-    .enemy .hint {
-      font-size: 13px;
-      margin-top: 4px;
-    }
-
+    /* ── HUD ── */
     #hud {
       position: absolute;
-      top: 18px;
-      left: 18px;
+      top: 14px;
+      left: 14px;
       display: flex;
-      gap: 14px;
-      z-index: 20;
+      gap: 10px;
       flex-wrap: wrap;
+      z-index: 20;
     }
-
     .panel {
-      background: rgba(255,255,255,0.92);
-      padding: 12px 18px;
-      border-radius: 18px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      font-weight: bold;
-      min-width: 120px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(6px);
+      padding: 8px 14px;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      font-family: var(--font-ui);
+      font-weight: 800;
+      font-size: 15px;
+      white-space: nowrap;
+      color: #1f2937;
     }
+    .panel span { color: #2563eb; }
 
-    #messageBox {
+    /* ── COMBO ── */
+    #comboMeter {
       position: absolute;
-      top: 100px;
+      top: 14px;
+      right: 14px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(6px);
+      padding: 10px 18px;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      z-index: 20;
+      text-align: center;
+      min-width: 90px;
+    }
+    #comboLabel { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: #6b7280; text-transform: uppercase; }
+    #comboValue { font-family: var(--font-game); font-size: 30px; color: #dc2626; line-height: 1.1; transition: transform 0.1s; }
+    #comboValue.bump { transform: scale(1.4); color: #f59e0b; }
+
+    /* ── SENTENCE PANEL ── */
+    #sentencePanel {
+      display: none;
+      position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(255,255,255,0.95);
-      border-radius: 20px;
+      top: 108px;
+      width: min(90%, 880px);
+      background: var(--panel-bg);
+      backdrop-filter: blur(8px);
       padding: 18px 26px;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.2);
-      z-index: 30;
+      border-radius: 22px;
+      font-size: 24px;
+      font-weight: 700;
+      z-index: 25;
+      box-shadow: var(--shadow);
       text-align: center;
-      max-width: 600px;
+      line-height: 1.7;
+      letter-spacing: 0.01em;
     }
-
-    #messageBox h1 {
-      margin-top: 0;
-      margin-bottom: 10px;
-      font-size: 36px;
-    }
-
-    #messageBox p {
+    #sentencePanel .ready-label {
       font-size: 18px;
-      line-height: 1.4;
+      color: #6b7280;
+      font-weight: 700;
+      margin-bottom: 6px;
     }
+    .s-done    { color: #16a34a; }
+    .s-current { background: #fde047; padding: 0 3px; border-radius: 4px; color: #1f2937; }
+    .s-pending { color: #9ca3af; }
+    .s-wrong   { background: #fecaca; color: #dc2626; border-radius: 4px; padding: 0 3px; }
 
-    button {
-      border: none;
-      border-radius: 14px;
-      padding: 14px 22px;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      background: #2563eb;
-      color: white;
-      transition: transform 0.15s;
-      margin-top: 10px;
-    }
-
-    button:hover {
-      transform: scale(1.05);
-    }
-
+    /* ── KEYBOARD GUIDE ── */
     #typingGuide {
       position: fixed;
-      bottom: 130px;
-      right: 20px;
-      width: 340px;
-      background: rgba(255,255,255,0.92);
-      border-radius: 22px;
-      padding: 16px;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+      bottom: 128px;
+      right: 16px;
+      width: 430px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(8px);
+      border-radius: 20px;
+      padding: 10px 12px 12px;
+      box-shadow: var(--shadow);
       z-index: 200;
       cursor: move;
       user-select: none;
+      display: none;
     }
-
-    #typingGuide h3 {
-      margin: 0 0 10px;
-    }
-
-    .keyboardRow {
+    #guideHeader {
       display: flex;
-      gap: 6px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    #typingGuide h3 { font-family: var(--font-game); font-size: 18px; color: #1f2937; margin: 0; }
+    #closeGuide {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      border: none;
+      background: #e5e7eb;
+      color: #6b7280;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      line-height: 1;
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    #closeGuide:hover { background: #f87171; color: #fff; }
+    #typingGuide p  { font-size: 11px; color: #6b7280; font-weight: 600; margin-bottom: 9px; line-height: 1.4; }
+    #reopenGuide {
+      position: fixed;
+      bottom: 128px;
+      right: 16px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(8px);
+      border-radius: 14px;
+      padding: 8px 14px;
+      box-shadow: var(--shadow);
+      z-index: 200;
+      font-family: var(--font-ui);
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      border: none;
+      color: #1f2937;
+      display: none;
+    }
+    #reopenGuide:hover { background: #fff; }
+
+    .keyRow { display: flex; gap: 3px; justify-content: center; margin-bottom: 3px; flex-wrap: nowrap; }
+    .key {
+      min-width: 24px;
+      height: 28px;
+      border-radius: 5px;
+      background: #e5e7eb;
+      border-bottom: 3px solid #9ca3af;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
-      margin-bottom: 6px;
+      font-size: 9px;
+      font-weight: 800;
+      transition: all 0.08s;
+      color: #374151;
+      padding: 2px 3px;
+      position: relative;
+    }
+    .key .sym { font-size: 8px; color: #6b7280; line-height: 1; }
+    .key .alpha { font-size: 10px; line-height: 1; }
+    .key.wide  { min-width: 36px; }
+    .key.xwide { min-width: 48px; }
+    .key.space-key { min-width: 200px; font-size: 10px; }
+    .key.active  { background: #fde047; border-color: #ca8a04; transform: scale(1.15); color: #1f2937; }
+    .key.correct { background: #4ade80; border-color: #16a34a; }
+    .key.wrong   { background: #f87171; border-color: #b91c1c; }
+    /* colour-code finger zones */
+    .f-pinky  { background: #fce7f3; border-color: #f9a8d4; }
+    .f-ring   { background: #ede9fe; border-color: #c4b5fd; }
+    .f-middle { background: #dbeafe; border-color: #93c5fd; }
+    .f-index  { background: #dcfce7; border-color: #86efac; }
+    .f-thumb  { background: #fef9c3; border-color: #fde047; }
+
+    /* ── FOOTER TIPS ── */
+    #footerTips {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      font-weight: 700;
+      color: #064e3b;
+      background: rgba(255,255,255,0.82);
+      padding: 8px 18px;
+      border-radius: 14px;
+      z-index: 20;
+      white-space: nowrap;
+      pointer-events: none;
     }
 
-    .key {
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      background: #e5e7eb;
+    /* ── OVERLAYS ── */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(2px);
+      z-index: 40;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: bold;
-      transition: all 0.1s;
     }
 
-    .key.active {
-      background: #facc15;
-      transform: scale(1.15);
-    }
-
-    .key.correct {
-      background: #4ade80;
-    }
-
-    .explosion {
-      position: absolute;
-      font-size: 42px;
-      pointer-events: none;
-      animation: pop 0.6s ease-out forwards;
-      z-index: 50;
-    }
-
-    @keyframes pop {
-      0% {
-        opacity: 1;
-        transform: scale(0.5);
-      }
-      100% {
-        opacity: 0;
-        transform: translateY(-50px) scale(1.8);
-      }
-    }
-
-    #comboMeter {
-      position: absolute;
-      top: 18px;
-      right: 18px;
-      background: rgba(255,255,255,0.92);
-      padding: 14px 20px;
-      border-radius: 18px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 20;
+    .modal {
+      background: #fff;
+      border-radius: 28px;
+      padding: 36px 42px;
+      max-width: 560px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
       text-align: center;
     }
+    .modal h1 { font-family: var(--font-game); font-size: 42px; color: #1f2937; margin-bottom: 14px; }
+    .modal p  { font-size: 17px; color: #374151; line-height: 1.6; margin-bottom: 18px; }
+    .modal .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 18px 0;
+    }
+    .modal .stat {
+      background: #f3f4f6;
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .modal .stat-val { font-family: var(--font-game); font-size: 30px; color: #2563eb; }
+    .modal .stat-lbl { font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; }
 
-    #comboText {
-      font-size: 26px;
-      font-weight: bold;
-      color: #dc2626;
+    .btn {
+      display: inline-block;
+      border: none;
+      border-radius: 16px;
+      padding: 14px 32px;
+      font-family: var(--font-game);
+      font-size: 22px;
+      cursor: pointer;
+      background: #2563eb;
+      color: #fff;
+      box-shadow: 0 5px 0 #1d4ed8;
+      transition: transform 0.1s, box-shadow 0.1s;
+      margin-top: 6px;
+    }
+    .btn:hover  { transform: translateY(-2px); box-shadow: 0 7px 0 #1d4ed8; }
+    .btn:active { transform: translateY(2px);  box-shadow: 0 2px 0 #1d4ed8; }
+
+    /* ── EFFECTS ── */
+    .explosion {
+      position: absolute;
+      font-size: 36px;
+      pointer-events: none;
+      z-index: 60;
+      animation: explode 0.55s ease-out forwards;
+    }
+    @keyframes explode {
+      0%   { opacity: 1; transform: scale(0.5) rotate(0deg); }
+      100% { opacity: 0; transform: translateY(-55px) scale(2) rotate(30deg); }
     }
 
-    #footerTips {
+    .point-popup {
+      position: absolute;
+      font-family: var(--font-game);
+      font-size: 22px;
+      color: #fbbf24;
+      pointer-events: none;
+      z-index: 60;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      animation: floatUp 0.8s ease-out forwards;
+    }
+    @keyframes floatUp {
+      0%   { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-60px); }
+    }
+
+    .level-banner {
       position: absolute;
       left: 50%;
-      transform: translateX(-50%);
-      bottom: 20px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #064e3b;
-      z-index: 20;
-      background: rgba(255,255,255,0.8);
-      padding: 10px 18px;
-      border-radius: 16px;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,0.97);
+      padding: 22px 48px;
+      border-radius: 24px;
+      font-family: var(--font-game);
+      font-size: 46px;
+      color: #1f2937;
+      z-index: 80;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+      text-align: center;
+      pointer-events: none;
+      animation: bannerPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes bannerPop {
+      0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+      100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     }
 
-    @media (max-width: 900px) {
-      #typingGuide {
-        width: 92%;
-        left: 4%;
-        right: 4%;
-        bottom: 130px;
-      }
+    /* Damage flash */
+    #damageFlash {
+      position: absolute;
+      inset: 0;
+      background: rgba(239,68,68,0);
+      pointer-events: none;
+      z-index: 70;
+      transition: background 0.05s;
+    }
 
-      #messageBox {
-        width: 92%;
-      }
+    @media (max-width: 768px) {
+      #typingGuide { width: 88%; left: 6%; right: 6%; bottom: 120px; }
+      .modal { padding: 24px 20px; }
+      .modal h1 { font-size: 32px; }
     }
   </style>
 </head>
 <body>
-  <div id="game">
-    <div class="sky"></div>
-    <div class="ground"></div>
+<div id="game">
+  <div class="sky"></div>
+  <div class="ground"></div>
+  <div id="damageFlash"></div>
 
-    <div class="cloud" style="width:140px;height:50px;top:60px;left:100px"></div>
-    <div class="cloud" style="width:180px;height:60px;top:120px;left:420px"></div>
-    <div class="cloud" style="width:150px;height:52px;top:80px;right:160px"></div>
+  <!-- Animated clouds -->
+  <div class="cloud" style="width:160px;height:55px;top:55px;left:8%;animation-duration:55s;opacity:.9"></div>
+  <div class="cloud" style="width:210px;height:65px;top:110px;left:35%;animation-duration:72s;opacity:.85;animation-delay:-20s"></div>
+  <div class="cloud" style="width:130px;height:48px;top:70px;left:65%;animation-duration:60s;opacity:.9;animation-delay:-10s"></div>
+  <div class="cloud" style="width:190px;height:58px;top:140px;left:78%;animation-duration:80s;opacity:.8;animation-delay:-35s"></div>
 
-    <div id="hud">
-      <div class="panel">⭐ Score: <span id="score">0</span></div>
-      <div class="panel">❤️ Lives: <span id="lives">5</span></div>
-      <div class="panel">⚡ WPM: <span id="wpm">0</span></div>
-      <div class="panel">🎯 Accuracy: <span id="accuracy">100%</span></div>
-      <div class="panel">🏆 Level: <span id="level">1</span></div>
-      <div class="panel">🧠 Mode: <span id="mode">Beginner</span></div>
+  <!-- HUD -->
+  <div id="hud">
+    <div class="panel">⭐ <span id="score">0</span></div>
+    <div class="panel">❤️ <span id="lives">5</span></div>
+    <div class="panel">⚡ <span id="wpm">0</span> WPM</div>
+    <div class="panel">🎯 <span id="accuracy">100</span>%</div>
+    <div class="panel">🏆 Lv <span id="level">1</span></div>
+    <div class="panel">🧠 <span id="mode">Beginner</span></div>
+  </div>
+
+  <!-- Combo -->
+  <div id="comboMeter">
+    <div id="comboLabel">COMBO</div>
+    <div id="comboValue">×0</div>
+  </div>
+
+  <!-- Player -->
+  <div id="player">🐼</div>
+
+  <!-- Sentence panel (hidden until Lv 11+) -->
+  <div id="sentencePanel"></div>
+
+  <!-- Keyboard Guide -->
+  <div id="typingGuide">
+    <div id="guideHeader">
+      <h3>&#9000; Finger Guide</h3>
+      <button id="closeGuide" title="Close guide">&#10005;</button>
     </div>
-
-    <div id="comboMeter">
-      <div>Combo</div>
-      <div id="comboText">x0</div>
+    <p>Colors = finger zones. Type the key shown on each critter!</p>
+    <div class="keyRow">
+      <div class="key f-pinky" data-k="`"><span class="sym">~</span><span class="alpha">`</span></div>
+      <div class="key f-pinky" data-k="1"><span class="sym">!</span><span class="alpha">1</span></div>
+      <div class="key f-ring"  data-k="2"><span class="sym">@</span><span class="alpha">2</span></div>
+      <div class="key f-middle" data-k="3"><span class="sym">#</span><span class="alpha">3</span></div>
+      <div class="key f-index" data-k="4"><span class="sym">$</span><span class="alpha">4</span></div>
+      <div class="key f-index" data-k="5"><span class="sym">%</span><span class="alpha">5</span></div>
+      <div class="key f-index" data-k="6"><span class="sym">^</span><span class="alpha">6</span></div>
+      <div class="key f-index" data-k="7"><span class="sym">&amp;</span><span class="alpha">7</span></div>
+      <div class="key f-middle" data-k="8"><span class="sym">*</span><span class="alpha">8</span></div>
+      <div class="key f-ring"  data-k="9"><span class="sym">(</span><span class="alpha">9</span></div>
+      <div class="key f-pinky" data-k="0"><span class="sym">)</span><span class="alpha">0</span></div>
+      <div class="key f-pinky" data-k="-"><span class="sym">_</span><span class="alpha">-</span></div>
+      <div class="key f-pinky" data-k="="><span class="sym">+</span><span class="alpha">=</span></div>
+      <div class="key wide f-pinky" data-k="backspace"><span class="alpha" style="font-size:9px">&#9003;</span></div>
     </div>
-
-    <div id="player">🐼</div>
-
-    <div id="typingGuide">
-      <h3>⌨️ Finger Guide</h3>
-      <p>Press the matching key before the critter reaches your panda hero!</p>
-      <div class="keyboardRow">
-        <div class="key">Q</div><div class="key">W</div><div class="key">E</div><div class="key">R</div><div class="key">T</div><div class="key">Y</div><div class="key">U</div><div class="key">I</div><div class="key">O</div><div class="key">P</div>
-      </div>
-      <div class="keyboardRow">
-        <div class="key">A</div><div class="key">S</div><div class="key">D</div><div class="key">F</div><div class="key">G</div><div class="key">H</div><div class="key">J</div><div class="key">K</div><div class="key">L</div>
-      </div>
-      <div class="keyboardRow">
-        <div class="key">Z</div><div class="key">X</div><div class="key">C</div><div class="key">V</div><div class="key">B</div><div class="key">N</div><div class="key">M</div>
-      </div>
+    <div class="keyRow">
+      <div class="key wide f-pinky" data-k="tab"><span class="alpha" style="font-size:9px">Tab</span></div>
+      <div class="key f-pinky" data-k="q"><span class="alpha">Q</span></div>
+      <div class="key f-ring"  data-k="w"><span class="alpha">W</span></div>
+      <div class="key f-middle" data-k="e"><span class="alpha">E</span></div>
+      <div class="key f-index" data-k="r"><span class="alpha">R</span></div>
+      <div class="key f-index" data-k="t"><span class="alpha">T</span></div>
+      <div class="key f-index" data-k="y"><span class="alpha">Y</span></div>
+      <div class="key f-index" data-k="u"><span class="alpha">U</span></div>
+      <div class="key f-middle" data-k="i"><span class="alpha">I</span></div>
+      <div class="key f-ring"  data-k="o"><span class="alpha">O</span></div>
+      <div class="key f-pinky" data-k="p"><span class="alpha">P</span></div>
+      <div class="key f-pinky" data-k="["><span class="sym">{</span><span class="alpha">[</span></div>
+      <div class="key f-pinky" data-k="]"><span class="sym">}</span><span class="alpha">]</span></div>
+      <div class="key f-pinky" data-k="\"><span class="sym">|</span><span class="alpha">\</span></div>
     </div>
-
-    <div id="footerTips">Home row tip: Keep your fingers resting on A S D F and J K L ;</div>
-
-    <div id="sentencePanel" style="display:none; position:absolute; left:50%; transform:translateX(-50%); top:120px; width:80%; max-width:900px; background:rgba(255,255,255,0.95); padding:18px 24px; border-radius:22px; font-size:28px; font-weight:bold; z-index:25; box-shadow:0 8px 18px rgba(0,0,0,0.18); text-align:center;">
-      <span id="sentenceText"></span>
+    <div class="keyRow">
+      <div class="key xwide f-pinky" data-k="caps"><span class="alpha" style="font-size:9px">Caps</span></div>
+      <div class="key f-pinky" data-k="a" style="outline:2px solid #f97316;"><span class="alpha">A</span></div>
+      <div class="key f-ring"  data-k="s"><span class="alpha">S</span></div>
+      <div class="key f-middle" data-k="d"><span class="alpha">D</span></div>
+      <div class="key f-index" data-k="f" style="outline:2px solid #f97316;"><span class="alpha">F</span></div>
+      <div class="key f-index" data-k="g"><span class="alpha">G</span></div>
+      <div class="key f-index" data-k="h"><span class="alpha">H</span></div>
+      <div class="key f-index" data-k="j" style="outline:2px solid #f97316;"><span class="alpha">J</span></div>
+      <div class="key f-middle" data-k="k"><span class="alpha">K</span></div>
+      <div class="key f-ring"  data-k="l"><span class="alpha">L</span></div>
+      <div class="key f-pinky" data-k=";"><span class="sym">:</span><span class="alpha">;</span></div>
+      <div class="key f-pinky" data-k="'"><span class="sym">"</span><span class="alpha">'</span></div>
+      <div class="key xwide f-pinky" data-k="enter"><span class="alpha" style="font-size:9px">Enter</span></div>
     </div>
+    <div class="keyRow">
+      <div class="key xwide f-pinky" data-k="shift"><span class="alpha" style="font-size:9px">Shift</span></div>
+      <div class="key f-pinky" data-k="z"><span class="alpha">Z</span></div>
+      <div class="key f-ring"  data-k="x"><span class="alpha">X</span></div>
+      <div class="key f-middle" data-k="c"><span class="alpha">C</span></div>
+      <div class="key f-index" data-k="v"><span class="alpha">V</span></div>
+      <div class="key f-index" data-k="b"><span class="alpha">B</span></div>
+      <div class="key f-index" data-k="n"><span class="alpha">N</span></div>
+      <div class="key f-middle" data-k="m"><span class="alpha">M</span></div>
+      <div class="key f-ring"  data-k=","><span class="sym">&lt;</span><span class="alpha">,</span></div>
+      <div class="key f-pinky" data-k="."><span class="sym">&gt;</span><span class="alpha">.</span></div>
+      <div class="key f-pinky" data-k="/"><span class="sym">?</span><span class="alpha">/</span></div>
+      <div class="key xwide f-pinky" data-k="rshift"><span class="alpha" style="font-size:9px">Shift</span></div>
+    </div>
+    <div class="keyRow">
+      <div class="key space-key f-thumb" data-k=" "><span class="alpha">Space</span></div>
+    </div>
+    <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;font-size:10px;font-weight:700;justify-content:center;">
+      <span style="background:#fce7f3;padding:2px 6px;border-radius:4px;">Pinky</span>
+      <span style="background:#ede9fe;padding:2px 6px;border-radius:4px;">Ring</span>
+      <span style="background:#dbeafe;padding:2px 6px;border-radius:4px;">Middle</span>
+      <span style="background:#dcfce7;padding:2px 6px;border-radius:4px;">Index</span>
+      <span style="background:#fef9c3;padding:2px 6px;border-radius:4px;">Thumb</span>
+      <span style="outline:2px solid #f97316;padding:2px 6px;border-radius:4px;">Home keys</span>
+    </div>
+  </div>
+  <button id="reopenGuide">&#9000; Finger Guide</button>
 
-    <div id="messageBox">
+  <div id="footerTips">🏠 Home row: keep fingers on A S D F — J K L ;</div>
+
+  <!-- Start screen overlay -->
+  <div class="overlay" id="startOverlay">
+    <div class="modal">
       <h1>🐼 Pandy Type</h1>
       <p>
         Help your panda hero defend the backyard from silly letter monsters!<br><br>
-        Type the correct letter quickly to zap each enemy.
-        The faster and more accurate you are, the higher your score and WPM!
+        <strong>Levels 1–10</strong> — Arcade mode: zap letters as they charge at you.<br>
+        <strong>Level 11+</strong> — Sentence &amp; Paragraph mode: type whole phrases!<br><br>
+        Type fast and accurately for bonus points and higher combos.
       </p>
-      <button id="startBtn">Start Adventure</button>
+      <button class="btn" id="startBtn">Start Adventure 🚀</button>
     </div>
   </div>
+</div>
 
-  <script>
-    const game = document.getElementById('game');
-    const scoreEl = document.getElementById('score');
-    const livesEl = document.getElementById('lives');
-    const wpmEl = document.getElementById('wpm');
-    const accuracyEl = document.getElementById('accuracy');
-    const levelEl = document.getElementById('level');
-    const modeEl = document.getElementById('mode');
-    const comboText = document.getElementById('comboText');
-    const player = document.getElementById('player');
-    const messageBox = document.getElementById('messageBox');
-    const startBtn = document.getElementById('startBtn');
+<script>
+// ─────────────────────────────────────────────
+// CONSTANTS & CONFIG
+// ─────────────────────────────────────────────
+const LETTERS_BEGINNER  = 'asdfghjklqwertyuiopzxcvbnm'.split('');
+const LETTERS_ADVANCED  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[];:,.<>?'.split('');
+const ENEMY_FACES       = ['👾','🐸','🦀','🐙','👹','🧟','🐢','🦖','🤖','🐛'];
+const LANES             = [155, 248, 341, 418]; // Y positions (px from top)
+const SCORE_PER_ENEMY   = 10;
+const SCORE_PER_COMBO   = 1;   // extra per combo streak
+const SCORE_PER_SENTENCE= 120;
+const LEVEL_SCORE_STEP  = 500; // score needed per level
+const MAX_LIVES         = 5;
 
-    const beginnerLetters = 'asdfjklqwertyuiopzxcvbnm'.split('');
-    const advancedLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{};:,.<>/?'.split('');
+const SENTENCES = [
+  'The turtle types very fast.',
+  'Coding games are super fun!',
+  'Practice makes typing easier.',
+  'My fingers rest on the home row.',
+  'Quick brown fox jumps over the lazy dog.',
+  'Typing every day builds speed and accuracy.',
+  'The panda hero protects the keyboard kingdom.',
+  'Can you beat the next typing challenge?',
+  'Speed and accuracy win the day.',
+  'Every keystroke brings you closer to victory!',
+];
 
-    let letters = [...beginnerLetters];
-    const enemyFaces = ['👾', '🐸', '🦀', '🐙', '👹', '🧟', '🐢', '🦖'];
+const PARAGRAPHS = [
+  'The panda hero sits at the keyboard ready to defend the digital forest. Every correct keystroke sends away a wave of silly letter monsters.',
+  'Typing is a skill that grows stronger with practice. The more you train your fingers, the faster and more accurate you become.',
+  'In the keyboard kingdom, speed and accuracy are the keys to victory. Focus on each letter and stay calm under pressure.',
+  'Great typists keep their eyes on the screen, not the keys. Trust your fingers to find the right letters and let your speed grow naturally.',
+];
 
-    let enemies = [];
-    let score = 0;
-    let lives = 5;
-    let combo = 0;
-    let totalTyped = 0;
-    let correctTyped = 0;
-    let gameRunning = false;
-    let sentenceMode = false;
-    let sentenceIntro = false;
-    let currentSentence = '';
-    let currentIndex = 0;
+// ─────────────────────────────────────────────
+// DOM REFS
+// ─────────────────────────────────────────────
+const gameEl        = document.getElementById('game');
+const scoreEl       = document.getElementById('score');
+const livesEl       = document.getElementById('lives');
+const wpmEl         = document.getElementById('wpm');
+const accuracyEl    = document.getElementById('accuracy');
+const levelEl       = document.getElementById('level');
+const modeEl        = document.getElementById('mode');
+const comboValueEl  = document.getElementById('comboValue');
+const playerEl      = document.getElementById('player');
+const sentencePanel = document.getElementById('sentencePanel');
+const startOverlay  = document.getElementById('startOverlay');
+const startBtn      = document.getElementById('startBtn');
+const damageFlash   = document.getElementById('damageFlash');
 
-    const practiceSentences = [
-      'The turtle types very fast.',
-      'Coding games are super fun!',
-      'Practice makes typing easier.',
-      'My fingers rest on the home row.',
-      'Quick brown fox jumps over the lazy dog.',
-      'Typing every day builds speed and accuracy.',
-      'The panda hero protects the keyboard kingdom.',
-      'Can you beat the next typing challenge?'
-    ];
+// ─────────────────────────────────────────────
+// GAME STATE
+// ─────────────────────────────────────────────
+let state = null; // created fresh on each game start
 
-    const practiceParagraphs = [
-      'The panda hero sits at the keyboard ready to defend the digital forest. Every correct keystroke sends away a wave of silly letter monsters.',
-      'Typing is a skill that grows stronger with practice. The more you train your fingers, the faster and more accurate you become.',
-      'In the keyboard kingdom, speed and accuracy are the keys to victory. Focus on each letter and stay calm under pressure.'
-    ];
-    let spawnRate = 1700;
-    let enemySpeed = 1.3;
-    let level = 1;
-    let startTime = null;
-    let lastCorrectTime = null;
+function createState() {
+  return {
+    running:        false,
+    score:          0,
+    lives:          MAX_LIVES,
+    combo:          0,
+    totalTyped:     0,
+    correctTyped:   0,
+    level:          1,
+    startTime:      Date.now(),
+    lastCorrectMs:  null,
 
-    function startGame() {
-      messageBox.style.display = 'none';
-      gameRunning = true;
-      score = 0;
-      lives = 5;
-      combo = 0;
-      totalTyped = 0;
-      correctTyped = 0;
-      spawnRate = 1700;
-      enemySpeed = 1.3;
-      level = 1;
-      startTime = Date.now();
+    // Arcade mode
+    enemies:        [],
+    activeLetters:  [...LETTERS_BEGINNER],
+    spawnDelay:     1800, // ms between spawns
+    enemySpeed:     1.2,
+    spawnTimer:     null,
+    animFrame:      null,
 
+    // Sentence mode
+    sentenceActive: false,
+    sentenceReady:  false, // false = "get ready" showing
+    sentenceText:   '',
+    sentenceIdx:    0,
+    sentenceWrong:  false,
+  };
+}
+
+// ─────────────────────────────────────────────
+// GAME INIT / END
+// ─────────────────────────────────────────────
+function startGame() {
+  // Clean up any previous session
+  if (state) stopSession();
+
+  state = createState();
+  state.running = true;
+
+  startOverlay.style.display = 'none';
+  sentencePanel.style.display = 'none';
+
+  // Show finger guide when game begins
+  guide.style.display = 'block';
+  reopenGuide.style.display = 'none';
+
+  updateHUD();
+  scheduleSpawn();
+  requestAnimationFrame(gameLoop);
+}
+
+function stopSession() {
+  state.running = false;
+  clearTimeout(state.spawnTimer);
+  cancelAnimationFrame(state.animFrame);
+  state.enemies.forEach(e => e.el.remove());
+  state.enemies = [];
+}
+
+function endGame() {
+  stopSession();
+
+  // Hide finger guide on game over screen
+  guide.style.display = 'none';
+  reopenGuide.style.display = 'none';
+
+  const accuracy = state.totalTyped === 0 ? 100 : Math.round((state.correctTyped / state.totalTyped) * 100);
+  const elapsed  = (Date.now() - state.startTime) / 60000;
+  const wpm      = elapsed > 0 ? Math.round((state.correctTyped / 5) / elapsed) : 0;
+
+  const overlay  = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h1>🏁 Great Job!</h1>
+      <p>You made it to <strong>Level ${state.level}</strong>. Keep practicing to become a typing master! ⌨️🐼</p>
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-val">${state.score}</div><div class="stat-lbl">Score</div></div>
+        <div class="stat"><div class="stat-val">${accuracy}%</div><div class="stat-lbl">Accuracy</div></div>
+        <div class="stat"><div class="stat-val">${wpm}</div><div class="stat-lbl">WPM</div></div>
+        <div class="stat"><div class="stat-val">${state.level}</div><div class="stat-lbl">Level</div></div>
+      </div>
+      <button class="btn" id="restartBtn">Play Again 🔄</button>
+    </div>
+  `;
+  gameEl.appendChild(overlay);
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    overlay.remove();
+    sentencePanel.style.display = 'none';
+    sentencePanel.innerHTML = '';
+    startGame();
+  });
+}
+
+// ─────────────────────────────────────────────
+// GAME LOOP (arcade mode movement)
+// ─────────────────────────────────────────────
+function gameLoop() {
+  if (!state.running) return;
+
+  if (!state.sentenceActive) {
+    for (let i = state.enemies.length - 1; i >= 0; i--) {
+      const enemy = state.enemies[i];
+      enemy.x -= enemy.speed;
+      enemy.el.style.left = enemy.x + 'px';
+
+      if (enemy.x + 82 < 72) {
+        enemy.el.remove();
+        state.enemies.splice(i, 1);
+        handleMiss();
+      }
+    }
+  }
+
+  state.animFrame = requestAnimationFrame(gameLoop);
+}
+
+// ─────────────────────────────────────────────
+// SPAWN LOOP
+// ─────────────────────────────────────────────
+function scheduleSpawn() {
+  if (!state.running || state.sentenceActive) return;
+
+  spawnEnemy();
+  state.spawnTimer = setTimeout(() => {
+    if (state.running) scheduleSpawn();
+  }, state.spawnDelay + Math.random() * 400);
+}
+
+function spawnEnemy() {
+  const letter = state.activeLetters[Math.floor(Math.random() * state.activeLetters.length)];
+  const face   = ENEMY_FACES[Math.floor(Math.random() * ENEMY_FACES.length)];
+  const lane   = LANES[Math.floor(Math.random() * LANES.length)];
+
+  const el = document.createElement('div');
+  el.className = 'enemy';
+  el.innerHTML = `
+    <div class="face">${face}</div>
+    <div class="letter">${escapeHtml(letter)}</div>
+    <div class="hint">type me!</div>
+    <div class="enemy-hp"><div class="enemy-hp-inner" style="width:100%"></div></div>
+  `;
+  el.style.top  = (lane - 41) + 'px'; // center in lane
+  el.style.left = window.innerWidth + 'px';
+  gameEl.appendChild(el);
+
+  const speed = state.enemySpeed + Math.random() * 0.6;
+  state.enemies.push({ el, letter, x: window.innerWidth, speed });
+}
+
+// ─────────────────────────────────────────────
+// MISS / HIT / LIVES
+// ─────────────────────────────────────────────
+function handleMiss() {
+  state.combo = 0;
+  state.lives--;
+  updateHUD();
+  flashDamage();
+  shakePlayer();
+  if (state.lives <= 0) endGame();
+}
+
+function handleArcadeHit(enemy, key) {
+  state.correctTyped++;
+  state.combo++;
+
+  // Speed bonus
+  let bonus = 0;
+  if (state.lastCorrectMs !== null) {
+    const delta = Date.now() - state.lastCorrectMs;
+    bonus = Math.max(0, Math.floor(40 - delta / 60));
+  }
+  state.lastCorrectMs = Date.now();
+
+  const points = SCORE_PER_ENEMY + state.combo * SCORE_PER_COMBO + bonus;
+  state.score += points;
+
+  // Effects
+  popEffect(enemy.x, parseInt(enemy.el.style.top));
+  floatPoints(enemy.x + 28, parseInt(enemy.el.style.top) - 20, '+' + points);
+
+  enemy.el.remove();
+  state.enemies = state.enemies.filter(e => e !== enemy);
+
+  jumpPlayer();
+  highlightKey(key, 'correct');
+  updateHUD();
+  bumpCombo();
+  checkLevelUp();
+}
+
+// ─────────────────────────────────────────────
+// SENTENCE MODE
+// ─────────────────────────────────────────────
+function enterSentenceMode() {
+  state.sentenceActive = true;
+
+  // Clear remaining enemies
+  state.enemies.forEach(e => e.el.remove());
+  state.enemies = [];
+  clearTimeout(state.spawnTimer);
+
+  const useParagraph = state.level >= 14;
+  const pool = useParagraph ? PARAGRAPHS : SENTENCES;
+  state.sentenceText = pool[Math.floor(Math.random() * pool.length)];
+  state.sentenceIdx  = 0;
+  state.sentenceWrong = false;
+
+  modeEl.textContent = useParagraph ? 'Paragraph' : 'Sentence';
+
+  // Show "get ready" screen
+  sentencePanel.style.display = 'block';
+  state.sentenceReady = false;
+  sentencePanel.innerHTML = `<div class="ready-label">👀 Get ready… type the sentence below!</div>`;
+
+  setTimeout(() => {
+    state.sentenceReady = true;
+    renderSentence();
+  }, 2000);
+}
+
+function renderSentence() {
+  const text = state.sentenceText;
+  const idx  = state.sentenceIdx;
+  let html   = '';
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = escapeHtml(text[i]);
+    if (i < idx) {
+      html += `<span class="s-done">${ch}</span>`;
+    } else if (i === idx) {
+      const cls = state.sentenceWrong ? 's-wrong' : 's-current';
+      html += `<span class="${cls}">${ch}</span>`;
+    } else {
+      html += `<span class="s-pending">${ch}</span>`;
+    }
+  }
+
+  sentencePanel.innerHTML = html;
+}
+
+function handleSentenceKey(key) {
+  if (!state.sentenceReady) return;
+
+  const expected = state.sentenceText[state.sentenceIdx];
+  state.totalTyped++;
+
+  if (key === expected) {
+    state.correctTyped++;
+    state.sentenceWrong = false;
+    state.sentenceIdx++;
+    state.combo++;
+    state.score += 5 + Math.floor(state.combo * 0.5);
+    highlightKey(key.toLowerCase(), 'correct');
+    jumpPlayer();
+    bumpCombo();
+
+    if (state.sentenceIdx >= state.sentenceText.length) {
+      // Sentence complete!
+      state.score += SCORE_PER_SENTENCE;
+      floatPoints(window.innerWidth / 2 - 30, 200, '+' + SCORE_PER_SENTENCE + ' CLEAR!');
       updateHUD();
+      checkLevelUp();
 
-      enemies.forEach(e => e.el.remove());
-      enemies = [];
-
-      gameLoop();
-      spawnLoop();
-    }
-
-    function spawnEnemy() {
-      if (!gameRunning) return;
-
-      const enemy = document.createElement('div');
-      enemy.className = 'enemy';
-
-      const letter = letters[Math.floor(Math.random() * letters.length)];
-      const face = enemyFaces[Math.floor(Math.random() * enemyFaces.length)];
-
-      enemy.innerHTML = `
-        <div>${face}</div>
-        <div class="letter">${letter}</div>
-        <div class="hint">Type me!</div>
-      `;
-
-      const lane = Math.floor(Math.random() * 4);
-      const y = 160 + lane * 105;
-
-      enemy.style.top = y + 'px';
-      enemy.style.left = window.innerWidth + 'px';
-
-      game.appendChild(enemy);
-
-      enemies.push({
-        el: enemy,
-        letter,
-        x: window.innerWidth,
-        y,
-        speed: enemySpeed + Math.random() * 0.7
-      });
-    }
-
-    function gameLoop() {
-      if (!gameRunning) return;
-
-      enemies.forEach((enemy, index) => {
-        enemy.x -= enemy.speed;
-        enemy.el.style.left = enemy.x + 'px';
-
-        if (enemy.x < 130) {
-          enemy.el.remove();
-          enemies.splice(index, 1);
-          loseLife();
-        }
-      });
-
-      requestAnimationFrame(gameLoop);
-    }
-
-    function spawnLoop() {
-      if (!gameRunning) return;
-
-      // Pause random enemy spawning during sentence mode
-      if (sentenceMode) {
-        setTimeout(() => {
-          if (gameRunning) spawnLoop();
-        }, 300);
-        return;
-      }
-
-      spawnEnemy();
-
+      // Small pause then next sentence
+      sentencePanel.innerHTML = '<span style="color:#16a34a;font-size:28px;">✅ Perfect!</span>';
       setTimeout(() => {
-        if (gameRunning) spawnLoop();
-      }, spawnRate);
-    }, spawnRate);
+        // Stay in sentence mode but pick a new text
+        enterSentenceMode();
+      }, 1200);
+      return;
     }
+  } else {
+    // Wrong key
+    state.sentenceWrong = true;
+    state.combo = 0;
+    highlightKey(key.toLowerCase(), 'wrong');
+    shakePlayer();
+    bumpCombo();
+  }
 
-    function loseLife() {
-      combo = 0;
-      lives--;
-      updateHUD();
+  updateHUD();
+  renderSentence();
+}
 
-      shakePlayer();
+// ─────────────────────────────────────────────
+// LEVEL PROGRESSION
+// ─────────────────────────────────────────────
+function checkLevelUp() {
+  const newLevel = Math.floor(state.score / LEVEL_SCORE_STEP) + 1;
+  if (newLevel <= state.level) return;
 
-      if (lives <= 0) {
-        endGame();
-      }
-    }
+  state.level = newLevel;
 
-    function shakePlayer() {
-      player.style.transform = 'translateX(-10px)';
+  // Difficulty scaling
+  state.enemySpeed = 1.2 + (state.level - 1) * 0.22;
+  state.spawnDelay = Math.max(600, 1800 - (state.level - 1) * 100);
+
+  // Unlock advanced characters at level 4
+  if (state.level === 4) {
+    state.activeLetters = [...LETTERS_ADVANCED];
+    modeEl.textContent = 'Advanced';
+    showLevelBanner('Level ' + state.level + ' 🔥\nAdvanced chars unlocked!');
+  } else if (state.level < 4) {
+    showLevelBanner('Level ' + state.level + '! 🎉');
+  }
+
+  // Enter sentence mode at level 11
+  if (state.level === 11 && !state.sentenceActive) {
+    showLevelBanner('Level 11!\nSentence Mode 📝', () => enterSentenceMode());
+    return;
+  }
+
+  // Stay in sentence mode above 11 — just pick new text on next completion
+  if (state.level >= 11 && !state.sentenceActive) {
+    enterSentenceMode();
+  }
+
+  updateHUD();
+}
+
+function showLevelBanner(text, callback) {
+  const banner = document.createElement('div');
+  banner.className = 'level-banner';
+  banner.innerHTML = text.replace(/\n/g, '<br>');
+  gameEl.appendChild(banner);
+
+  setTimeout(() => {
+    banner.style.opacity = '0';
+    banner.style.transition = 'opacity 0.4s';
+    setTimeout(() => {
+      banner.remove();
+      if (callback) callback();
+    }, 400);
+  }, 1600);
+}
+
+// ─────────────────────────────────────────────
+// HUD UPDATE
+// ─────────────────────────────────────────────
+function updateHUD() {
+  scoreEl.textContent   = state.score;
+  livesEl.textContent   = '❤️'.repeat(state.lives) || '💀';
+  levelEl.textContent   = state.level;
+  comboValueEl.textContent = '×' + state.combo;
+
+  const acc = state.totalTyped === 0 ? 100 : Math.round((state.correctTyped / state.totalTyped) * 100);
+  accuracyEl.textContent = acc;
+
+  const elapsed = (Date.now() - state.startTime) / 60000;
+  const wpm = elapsed > 0 ? Math.round((state.correctTyped / 5) / elapsed) : 0;
+  wpmEl.textContent = wpm;
+
+  if (state.level < 4) modeEl.textContent = state.level <= 2 ? 'Beginner' : 'Intermediate';
+}
+
+// ─────────────────────────────────────────────
+// VISUAL EFFECTS
+// ─────────────────────────────────────────────
+function jumpPlayer() {
+  playerEl.classList.remove('jump');
+  void playerEl.offsetWidth; // reflow
+  playerEl.classList.add('jump');
+  setTimeout(() => playerEl.classList.remove('jump'), 130);
+}
+
+function shakePlayer() {
+  playerEl.classList.remove('shake');
+  void playerEl.offsetWidth;
+  playerEl.classList.add('shake');
+  setTimeout(() => playerEl.classList.remove('shake'), 260);
+}
+
+function flashDamage() {
+  damageFlash.style.background = 'rgba(239,68,68,0.35)';
+  setTimeout(() => { damageFlash.style.background = 'rgba(239,68,68,0)'; }, 200);
+}
+
+function popEffect(x, y) {
+  const el = document.createElement('div');
+  el.className = 'explosion';
+  el.textContent = ['💥','✨','🌟','⚡'][Math.floor(Math.random() * 4)];
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+  gameEl.appendChild(el);
+  setTimeout(() => el.remove(), 560);
+}
+
+function floatPoints(x, y, text) {
+  const el = document.createElement('div');
+  el.className = 'point-popup';
+  el.textContent = text;
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+  gameEl.appendChild(el);
+  setTimeout(() => el.remove(), 820);
+}
+
+function bumpCombo() {
+  comboValueEl.classList.remove('bump');
+  void comboValueEl.offsetWidth;
+  comboValueEl.classList.add('bump');
+  setTimeout(() => comboValueEl.classList.remove('bump'), 150);
+}
+
+function highlightKey(k, type) {
+  const keys = document.querySelectorAll('.key');
+  keys.forEach(key => {
+    if (key.dataset.k === k.toLowerCase()) {
+      key.classList.add('active');
+      if (type === 'correct') key.classList.add('correct');
+      if (type === 'wrong')   key.classList.add('wrong');
       setTimeout(() => {
-        player.style.transform = 'translateX(10px)';
-      }, 70);
-      setTimeout(() => {
-        player.style.transform = 'translateX(0px)';
-      }, 140);
+        key.classList.remove('active','correct','wrong');
+      }, 220);
     }
+  });
+}
 
-    function updateHUD() {
-      scoreEl.textContent = score;
-      livesEl.textContent = lives;
-      comboText.textContent = 'x' + combo;
-      levelEl.textContent = level;
+// ─────────────────────────────────────────────
+// KEY INPUT
+// ─────────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  // Ignore modifier-only keys, Tab, etc.
+  if (e.key.length > 1 && e.key !== ' ') return;
+  if (!state || !state.running) return;
 
-      const accuracy = totalTyped === 0
-        ? 100
-        : Math.round((correctTyped / totalTyped) * 100);
+  const key = e.key; // preserve case for advanced / sentence chars
 
-      accuracyEl.textContent = accuracy + '%';
+  if (state.sentenceActive) {
+    handleSentenceKey(key);
+    return;
+  }
 
-      const minutes = (Date.now() - startTime) / 60000;
-      const wpm = minutes > 0
-        ? Math.round((correctTyped / 5) / minutes)
-        : 0;
+  // Arcade mode
+  state.totalTyped++;
 
-      wpmEl.textContent = wpm;
-    }
+  // Find first matching enemy
+  const target = state.enemies.find(en =>
+    en.letter === key || en.letter === key.toLowerCase() || en.letter === key.toUpperCase()
+  );
 
-    function highlightKey(letter, success) {
-      const keys = document.querySelectorAll('.key');
+  if (target) {
+    handleArcadeHit(target, key.toLowerCase());
+  } else {
+    state.combo = 0;
+    highlightKey(key.toLowerCase(), 'wrong');
+    updateHUD();
+    bumpCombo();
+  }
+});
 
-      keys.forEach(key => {
-        if (key.textContent.toLowerCase() === letter.toLowerCase()) {
-          key.classList.add('active');
-          if (success) {
-            key.classList.add('correct');
-          }
+// ─────────────────────────────────────────────
+// CLOSE / REOPEN GUIDE
+// ─────────────────────────────────────────────
+const guide       = document.getElementById('typingGuide');
+const closeGuide  = document.getElementById('closeGuide');
+const reopenGuide = document.getElementById('reopenGuide');
 
-          setTimeout(() => {
-            key.classList.remove('active');
-            key.classList.remove('correct');
-          }, 240);
-        }
-      });
-    }
+closeGuide.addEventListener('click', e => {
+  e.stopPropagation();
+  guide.style.display       = 'none';
+  reopenGuide.style.display = 'block';
+});
+reopenGuide.addEventListener('click', () => {
+  guide.style.display       = 'block';
+  reopenGuide.style.display = 'none';
+});
 
-    function popEffect(x, y) {
-      const pop = document.createElement('div');
-      pop.className = 'explosion';
-      pop.textContent = '💥';
-      pop.style.left = x + 'px';
-      pop.style.top = y + 'px';
+// ─────────────────────────────────────────────
+// DRAGGABLE GUIDE
+// ─────────────────────────────────────────────
+let dragging = false, dragOX = 0, dragOY = 0;
 
-      game.appendChild(pop);
+guide.addEventListener('mousedown', e => {
+  if (e.target === closeGuide) return; // don't drag when clicking X
+  dragging = true;
+  const r = guide.getBoundingClientRect();
+  dragOX = e.clientX - r.left;
+  dragOY = e.clientY - r.top;
+});
+document.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  guide.style.left   = (e.clientX - dragOX) + 'px';
+  guide.style.top    = (e.clientY - dragOY) + 'px';
+  guide.style.right  = 'auto';
+  guide.style.bottom = 'auto';
+});
+document.addEventListener('mouseup', () => { dragging = false; });
 
-      setTimeout(() => {
-        pop.remove();
-      }, 600);
-    }
+// ─────────────────────────────────────────────
+// UTILITY
+// ─────────────────────────────────────────────
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
-    function startSentenceMode() {
-      sentenceMode = true;
-      sentenceIntro = true;
-
-      const useParagraph = level >= 10;
-
-      if (useParagraph) {
-        const base = practiceParagraphs[Math.floor(Math.random() * practiceParagraphs.length)];
-        currentSentence = base;
-        modeEl.textContent = 'Paragraph Mode';
-      } else {
-        currentSentence = practiceSentences[Math.floor(Math.random() * practiceSentences.length)];
-        modeEl.textContent = 'Sentence Mode';
-      }
-
-      currentIndex = 0;
-
-      const panel = document.getElementById('sentencePanel');
-      panel.style.display = 'block';
-
-      panel.innerHTML = `<div style="font-size:22px; margin-bottom:10px; color:#1f2937;">👀 Get ready...</div><div id="sentenceText"></div>`;
-
-      setTimeout(() => {
-        sentenceIntro = false;
-        updateSentenceDisplay();
-      }, 2000);
-    }
-
-    function updateSentenceDisplay() {
-      const sentenceText = document.getElementById('sentenceText');
-
-      let html = '';
-
-      for (let i = 0; i < currentSentence.length; i++) {
-        if (i < currentIndex) {
-          html += `<span style="color:#16a34a">${currentSentence[i]}</span>`;
-        } else if (i === currentIndex) {
-          html += `<span style="background:#fde047; padding:2px 4px; border-radius:4px;">${currentSentence[i]}</span>`;
-        } else {
-          html += `<span style="color:#374151">${currentSentence[i]}</span>`;
-        }
-      }
-
-      sentenceText.innerHTML = html;
-    }
-
-    function levelUpCheck() {
-      // Level progression is slower (longer levels)
-      const nextLevel = Math.floor(score / 440) + 1;
-
-      if (nextLevel > level) {
-        level = nextLevel;
-        enemySpeed += 0.25;
-        spawnRate = Math.max(650, spawnRate - 120);
-
-        // Unlock advanced characters
-        if (level >= 4) {
-          letters = [...advancedLetters];
-          modeEl.textContent = 'Advanced';
-        }
-
-        // Sentence / Paragraph Mode ONLY starts at Level 11
-        if (level >= 11 && !sentenceMode) {
-          modeEl.textContent = 'Paragraph Mode';
-          startSentenceMode();
-        }
-
-        showLevelMessage();
-      }
-    }
-
-    function showLevelMessage() {
-      const msg = document.createElement('div');
-      msg.style.position = 'absolute';
-      msg.style.left = '50%';
-      msg.style.top = '50%';
-      msg.style.transform = 'translate(-50%, -50%)';
-      msg.style.background = 'rgba(255,255,255,0.95)';
-      msg.style.padding = '24px 36px';
-      msg.style.borderRadius = '24px';
-      msg.style.fontSize = '42px';
-      msg.style.fontWeight = 'bold';
-      msg.style.zIndex = '100';
-      msg.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)';
-      msg.textContent = '🎉 LEVEL ' + level + '!';
-
-      game.appendChild(msg);
-
-      setTimeout(() => {
-        msg.remove();
-      }, 1400);
-    }
-
-    function endGame() {
-      gameRunning = false;
-
-      const accuracy = totalTyped === 0
-        ? 100
-        : Math.round((correctTyped / totalTyped) * 100);
-
-      const minutes = (Date.now() - startTime) / 60000;
-      const wpm = minutes > 0
-        ? Math.round((correctTyped / 5) / minutes)
-        : 0;
-
-      messageBox.style.display = 'block';
-      messageBox.innerHTML = `
-        <h1>🏁 Great Job!</h1>
-        <p>
-          Final Score: <strong>${score}</strong><br>
-          Accuracy: <strong>${accuracy}%</strong><br>
-          WPM: <strong>${wpm}</strong><br>
-          Level Reached: <strong>${level}</strong><br><br>
-          Keep practicing to become a typing master! ⌨️🐼
-        </p>
-        <button id="restartBtn">Play Again</button>
-      `;
-
-      document.getElementById('restartBtn').addEventListener('click', startGame);
-    }
-
-    document.addEventListener('keydown', (e) => {
-      if (sentenceMode) {
-        if (sentenceIntro) return;
-        const expected = currentSentence[currentIndex];
-
-        totalTyped++;
-
-        if (e.key === expected) {
-          correctTyped++;
-          currentIndex++;
-          combo++;
-          score += 5 + combo;
-
-          highlightKey(e.key.toLowerCase(), true);
-
-          if (currentIndex >= currentSentence.length) {
-            score += 100;
-            startSentenceMode();
-          } else {
-            updateSentenceDisplay();
-          }
-        } else {
-          combo = 0;
-          highlightKey(e.key.toLowerCase(), false);
-        }
-
-        updateHUD();
-        return;
-      }
-
-
-      if (!gameRunning) return;
-
-      const key = e.key.toLowerCase();
-
-      if (!letters.includes(key) && !letters.includes(e.key)) return;
-
-      totalTyped++;
-
-      const target = enemies.find(enemy => enemy.letter === e.key || enemy.letter === key);
-
-      if (target) {
-        correctTyped++;
-        combo++;
-
-        let speedBonus = 0;
-        if (lastCorrectTime) {
-          const delta = Date.now() - lastCorrectTime;
-          speedBonus = Math.max(0, Math.floor(50 - delta / 50));
-        }
-        lastCorrectTime = Date.now();
-
-        score += 10 + combo + speedBonus;
-
-        player.classList.add('jump');
-        setTimeout(() => player.classList.remove('jump'), 120);
-
-        popEffect(target.x, target.y);
-
-        target.el.remove();
-        enemies = enemies.filter(enemy => enemy !== target);
-
-        highlightKey(key, true);
-
-        levelUpCheck();
-      } else {
-        combo = 0;
-        highlightKey(key, false);
-      }
-
-      updateHUD();
-    });
-
-    // Make typing guide draggable
-    const typingGuide = document.getElementById('typingGuide');
-    let isDragging = false;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    typingGuide.addEventListener('mousedown', (e) => {
-      isDragging = true;
-      offsetX = e.clientX - typingGuide.getBoundingClientRect().left;
-      offsetY = e.clientY - typingGuide.getBoundingClientRect().top;
-    });
-
-    document.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      typingGuide.style.left = (e.clientX - offsetX) + 'px';
-      typingGuide.style.top = (e.clientY - offsetY) + 'px';
-      typingGuide.style.right = 'auto';
-      typingGuide.style.bottom = 'auto';
-    });
-
-    document.addEventListener('mouseup', () => {
-      isDragging = false;
-    });
-
-    startBtn.addEventListener('click', startGame);
-
-    window.addEventListener('resize', () => {
-      enemies.forEach(enemy => {
-        if (enemy.x > window.innerWidth) {
-          enemy.x = window.innerWidth;
-        }
-      });
-    });
-  </script>
+// ─────────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────────
+startBtn.addEventListener('click', startGame);
+</script>
 </body>
 </html>
