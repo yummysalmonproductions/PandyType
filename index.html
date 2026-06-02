@@ -121,6 +121,7 @@
     .enemy .face   { font-size: 26px; line-height: 1; }
     .enemy .letter { font-size: 30px; line-height: 1.1; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.35); }
     .enemy .hint   { font-size: 10px; font-family: var(--font-ui); font-weight: 700; color: rgba(255,255,255,0.85); letter-spacing: 0.03em; }
+    .enemy.sentence-enemy { background: #a855f7; border-color: #581c87; box-shadow: 0 5px 0 #581c87, 0 8px 12px rgba(0,0,0,0.2); }
 
     /* Health bar on enemy */
     .enemy-hp {
@@ -571,6 +572,27 @@
         <strong>Level 11+</strong> — Sentence &amp; Paragraph mode: type whole phrases!<br><br>
         Type fast and accurately for bonus points and higher combos.
       </p>
+      <div style="margin: 0 0 14px; display:flex; align-items:center; justify-content:center; gap:12px;">
+        <label style="font-weight:800; font-size:15px; color:#374151;">Start at level:</label>
+        <select id="levelPicker" style="font-family:var(--font-ui);font-size:15px;font-weight:700;padding:8px 14px;border-radius:12px;border:2px solid #e5e7eb;background:#f9fafb;color:#1f2937;cursor:pointer;outline:none;">
+          <option value="1">1 — Beginner (a-z)</option>
+          <option value="2">2</option>
+          <option value="3">3 — Intermediate</option>
+          <option value="4">4 — Advanced (A-Z, 0-9, symbols)</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+          <option value="11">11 — Sentence Mode</option>
+          <option value="12">12</option>
+          <option value="13">13</option>
+          <option value="16">16 — Paragraph Mode</option></option>
+          <option value="15">15</option>
+          <option value="20">20</option>
+        </select>
+      </div>
       <button class="btn" id="startBtn">Start Adventure 🚀</button>
     </div>
   </div>
@@ -587,27 +609,167 @@ const LANES             = [155, 248, 341, 418]; // Y positions (px from top)
 const SCORE_PER_ENEMY   = 10;
 const SCORE_PER_COMBO   = 1;   // extra per combo streak
 const SCORE_PER_SENTENCE= 120;
-const LEVEL_SCORE_STEP  = 500; // score needed per level
+const LEVEL_SCORE_STEP  = 800; // score needed per level
 const MAX_LIVES         = 5;
 
 const SENTENCES = [
+  // Classic pangrams & typing staples
+  'The quick brown fox jumps over the lazy dog.',
+  'Pack my box with five dozen liquor jugs.',
+  'How vexingly quick daft zebras jump!',
+  'The five boxing wizards jump quickly.',
+  'Sphinx of black quartz, judge my vow.',
+  'Two driven jocks help fax my big quiz.',
+  'Jackdaws love my big sphinx of quartz.',
+  'Cozy lummox gives smart squid who asks for job pen.',
+  'The job requires extra pluck and zeal from every young wage earner.',
+  "A wizard's job is to vex chumps quickly in fog.",
+  // Typing tips
   'The turtle types very fast.',
   'Coding games are super fun!',
   'Practice makes typing easier.',
   'My fingers rest on the home row.',
-  'Quick brown fox jumps over the lazy dog.',
   'Typing every day builds speed and accuracy.',
   'The panda hero protects the keyboard kingdom.',
   'Can you beat the next typing challenge?',
   'Speed and accuracy win the day.',
   'Every keystroke brings you closer to victory!',
+  'Keep your eyes on the screen, not the keys.',
+  'The home row is where your fingers belong.',
+  'A smooth typist never looks at the keyboard.',
+  'Focus on rhythm and the speed will follow.',
+  'Good posture makes typing feel effortless.',
+  'The fox jumps quickly over the sleeping dog.',
+  'The lazy dog slept all morning on the porch.',
+  'Bright stars filled the vast dark sky at night.',
+  'She typed the full report without a single mistake.',
+  'Practice every day and watch your speed climb.',
+  'Accurate typing is more valuable than fast typing.',
+  'Your fingers already know where the keys are.',
+  'Keep a steady pace and avoid rushing ahead.',
+  'The best typists make it look completely effortless.',
+  'Every finger has a home and a job to do.',
+  'Trust your muscle memory and let it guide you.',
+  'Look at the words ahead, not the ones you just typed.',
+  'Relax your hands and let the rhythm carry you forward.',
+  'A calm mind produces clean, accurate keystrokes.',
+  'The fastest typists never tense up under pressure.',
+  'Slow down just enough to stop making mistakes.',
+  // Nature & animals
+  'The river winds slowly through the green valley.',
+  'A flock of geese crossed the pale winter sky.',
+  'Red foxes hunt at dusk along the forest edge.',
+  'The old oak tree stood firm in the autumn wind.',
+  'Snow covered the mountain peaks by early morning.',
+  'Fireflies lit up the meadow after the summer rain.',
+  'The tide came in quietly and swallowed the shore.',
+  'A single crow perched on the telephone wire.',
+  'Wolves howl when the full moon rises over the ridge.',
+  'The sunflower turned slowly to follow the light.',
+  'Bees moved busily between the lavender and the sage.',
+  'The cat sat perfectly still and watched the mouse.',
+  'A blue heron stood knee-deep in the shallow creek.',
+  'Autumn leaves swirled in a slow, golden spiral.',
+  'The whale surfaced once and then was gone.',
+  // Food & everyday life
+  'She brewed a strong pot of coffee before sunrise.',
+  'The bread came out golden and smelled incredible.',
+  'He sliced the tomatoes thinly and added fresh basil.',
+  'They ate dinner on the porch as the stars appeared.',
+  'A bowl of warm soup is perfect on a cold day.',
+  'She squeezed half a lemon into the sparkling water.',
+  'The market was crowded with people buying fresh fruit.',
+  'He always burns the first pancake and saves the rest.',
+  'The kitchen smelled of garlic and olive oil.',
+  'Cold pizza for breakfast is a secret guilty pleasure.',
+  // Science & tech
+  'The satellite completed its orbit in ninety minutes.',
+  'Light travels at roughly three hundred thousand kilometers per second.',
+  'Every atom in your body was forged inside a star.',
+  'The code compiled cleanly on the very first try.',
+  'She debugged the loop and the program ran perfectly.',
+  'Open source software powers much of the modern web.',
+  'The robot arm moved with surprising grace and speed.',
+  'Data flows through fiber optic cables at the speed of light.',
+  'A single silicon chip can hold billions of transistors.',
+  'The telescope revealed a galaxy no one had seen before.',
+  // Adventure & action
+  'The explorer mapped every trail in the dense jungle.',
+  'They paddled hard against the current and made it through.',
+  'She climbed the last pitch before the clouds rolled in.',
+  'The ship held its course through the stormy night.',
+  'He sprinted across the finish line with nothing left.',
+  'They hiked twelve miles before setting up camp at dusk.',
+  'The cave opened into a vast underground chamber.',
+  'She cast the line and waited for the river to answer.',
+  'The race was lost and won in the final corner.',
+  'He packed light, moved fast, and left no trace.',
+  // Wisdom & quotes (paraphrased)
+  'A journey of a thousand miles begins with a single step.',
+  'The secret of getting ahead is simply getting started.',
+  'Do one thing every day that challenges you.',
+  'Small daily improvements lead to stunning long-term results.',
+  'Discipline is choosing what you want most over what you want now.',
+  'The expert in anything was once a complete beginner.',
+  'You do not rise to the level of your goals but fall to the level of your systems.',
+  'Done is better than perfect when perfect never ships.',
+  'Clarity comes from action, not from thinking alone.',
+  'What you practice in private shows up in public.',
+  // Fun & whimsical
+  'The dragon accidentally sneezed and toasted the birthday cake.',
+  'She trained her hamster to run the keyboard obstacle course.',
+  'The robot barista makes a surprisingly good cappuccino.',
+  'A penguin in a tuxedo is just appropriately dressed.',
+  'The wizard forgot the spell but remembered the password.',
+  'He taught the parrot to type, which was a mistake.',
+  'The astronaut missed the bus and had to take the rocket.',
+  'She found a trapdoor in the library behind the dictionaries.',
+  'The ninja ordered takeout and tipped generously.',
+  'Nobody expects the Spanish inquisition or a fast typist.',
 ];
 
 const PARAGRAPHS = [
-  'The panda hero sits at the keyboard ready to defend the digital forest. Every correct keystroke sends away a wave of silly letter monsters.',
-  'Typing is a skill that grows stronger with practice. The more you train your fingers, the faster and more accurate you become.',
-  'In the keyboard kingdom, speed and accuracy are the keys to victory. Focus on each letter and stay calm under pressure.',
-  'Great typists keep their eyes on the screen, not the keys. Trust your fingers to find the right letters and let your speed grow naturally.',
+  // Typing & skill building
+  'The panda hero sits at the keyboard ready to defend the digital forest. Every correct keystroke sends away a wave of silly letter monsters. Stay focused and keep your combo alive.',
+  'Typing is a skill that grows stronger with practice. The more you train your fingers, the faster and more accurate you become. Consistency beats raw talent every single time.',
+  'In the keyboard kingdom, speed and accuracy are the keys to victory. Focus on each letter and stay calm under pressure. A steady rhythm will carry you through even the hardest passages.',
+  'Great typists keep their eyes on the screen, not the keys. Trust your fingers to find the right letters and let your speed grow naturally. The keyboard becomes invisible with enough practice.',
+  'Every word you type is a small battle won. String them together and you build unstoppable momentum. The panda watches from the home row, ready to strike at every approaching character.',
+  'Touch typing frees your mind to focus on ideas instead of letters. Once your fingers learn the layout, the words flow like water. Keep your wrists low and your shoulders relaxed.',
+  'The quick rhythm of keystrokes is almost musical when you find your flow. Each finger has its territory on the board. Respect those boundaries and your accuracy will soar.',
+  'Speed records are broken by typists who never sacrifice accuracy for pace. Every corrected mistake costs more time than slowing down would have. Aim for clean first passes above all else.',
+  'Muscle memory is built one correct repetition at a time. There are no shortcuts to the feeling of your fingers knowing exactly where to go. Be patient and let the practice accumulate.',
+  'The difference between a slow typist and a fast one is not talent but hours. Every session you complete builds a layer of skill that never fully fades. Show up, type, and let time do its work.',
+  // Nature & environment
+  'The forest was quiet except for the sound of wind moving through the high branches. A single deer paused at the edge of the clearing and then disappeared into the shadows. The light faded slowly as the sun dropped behind the ridge.',
+  'Rain had been falling since early morning and showed no sign of stopping. The creek that usually barely reached the rocks was now a fast, brown river pushing through the willows. Everything smelled of wet earth and pine.',
+  'The tide pools were full of life at low water. Tiny crabs moved sideways under the rockweed while anemones waved their arms in the shallow current. A child knelt at the edge and stared, completely still, for a very long time.',
+  'In late autumn the geese flew south in long, shifting formations. They called to one another as they went, their voices carrying far across the empty fields below. By nightfall they were gone and the sky was quiet again.',
+  'The desert at night was nothing like the desert in the day. The heat gave way to a startling cold and the stars appeared in numbers that were hard to believe. A coyote somewhere nearby called once and was answered from very far off.',
+  // Science & discovery
+  'Every atom in your body was created inside a dying star billions of years ago. The iron in your blood and the calcium in your bones were forged in nuclear reactions beyond anything we can replicate. You are, quite literally, made of stardust.',
+  'The internet began as a small network connecting four university computers. Nobody involved imagined that it would one day link billions of devices across every continent. The gap between that first connection and the present one is almost impossible to measure.',
+  'When a bee finds a good source of flowers it returns to the hive and performs a dance. The angle and duration of the dance tell the other bees exactly where the flowers are relative to the sun. It is one of the most elegant communication systems in the natural world.',
+  "Scientists spent decades arguing about whether birds could navigate using the earth's magnetic field. The answer turned out to be yes, and the mechanism involves quantum effects inside specialized cells in their eyes. Migration is, at its core, a physics problem.",
+  'The deep ocean is so poorly mapped that we know more about the surface of the moon than about the seafloor. Creatures down there live without light, under crushing pressure, near vents that pour out water hot enough to melt lead. Life, it turns out, finds a way nearly everywhere.',
+  // Adventure & narrative
+  'She had been walking for three days when she finally saw the coast. The path had been harder than the map suggested and her boots had given out somewhere around the second afternoon. But the water was there, blue and real, exactly where she had been told it would be.',
+  'The old lighthouse had not been staffed in forty years but the light still came on every night. Nobody in the village could explain it and nobody had ever gone up to look. On stormy nights the beam swept the rocks like nothing had changed at all.',
+  'He had crossed that border seven times in his life, each time carrying something different. The first time it was fear. The last time it was relief. The crossings in between had carried everything else a person accumulates over a long and complicated life.',
+  'The map showed a road but the road had not been there for at least a generation. Grass grew in the center and the ditches had filled in completely. Still they followed its line because the map was old and the old maps in this country tended to be right.',
+  'They found the cabin exactly as it had been left, dishes in the rack and firewood stacked by the door. Whoever had been there last had expected to come back. Whether they ever did was not something the cabin could answer.',
+  // Wisdom & reflection
+  'Most skills feel impossible right before they start to feel easy. The gap between those two feelings is exactly where people tend to quit. If you can push through the frustrating middle the other side almost always arrives faster than you expected.',
+  'The things you own end up owning you if you let them. Every object demands attention, space, and eventually a decision. People who travel light tend to move faster and worry less about what they might lose.',
+  'Memory is not a recording but a reconstruction. Every time you remember something you are rebuilding it slightly differently from the pieces available to you at that moment. The past is more flexible than it appears.',
+  'Patience is not passive. It is an active decision to stay present when everything in you wants to rush forward or give up entirely. The people who are genuinely good at waiting have usually chosen it deliberately rather than simply accepting it.',
+  'Kindness costs less than almost any other thing of value. It takes almost no time, leaves no waste, and tends to return to the giver in unexpected ways. It is also, for reasons that are hard to explain, much rarer than it should be.',
+  // Humor & light
+  'The problem with the dragon was not the fire breathing but the snoring. It shook the whole mountain and rattled the windows of every village within three valleys. The knight who finally solved it did so with a pair of enormous custom earplugs and a very long stick.',
+  'She had taught herself to code by reading documentation at two in the morning with a cup of tea that was always cold before she remembered to drink it. Three years later she ran a team of twelve. The tea situation had not improved.',
+  'The office had a very strict policy about the kitchen. Twelve bullet points, laminated, taped to the cabinet above the sink. Nobody knew who had written it or when. It predated everyone currently employed there and was treated with a kind of awed respect.',
+  'The robot passed every test except one. It could write poetry, solve equations, and identify birds from their calls. It could not, under any circumstances, tell when someone was being sarcastic. This made meetings extremely awkward.',
+  'Learning to touch type as an adult feels deeply wrong for the first few weeks. Your brain knows exactly what your fingers are supposed to do and cannot understand why they are suddenly refusing. Then one morning it clicks and you cannot remember what the struggle felt like.',
 ];
 
 // ─────────────────────────────────────────────
@@ -632,32 +794,42 @@ const damageFlash   = document.getElementById('damageFlash');
 // ─────────────────────────────────────────────
 let state = null; // created fresh on each game start
 
-function createState() {
+function createState(startLevel) {
+  startLevel = startLevel || 1;
+  // Compute difficulty matching that level
+  const spd  = 1.0 + (startLevel - 1) * 0.12;
+  const dly  = Math.max(700, 2200 - (startLevel - 1) * 80);
+  const ltrs = startLevel >= 4 ? [...LETTERS_ADVANCED] : [...LETTERS_BEGINNER];
+  // Score offset so checkLevelUp doesn't immediately re-trigger
+  const scoreOffset = (startLevel - 1) * LEVEL_SCORE_STEP;
   return {
     running:        false,
-    score:          0,
+    score:          scoreOffset,
     lives:          MAX_LIVES,
     combo:          0,
     totalTyped:     0,
     correctTyped:   0,
-    level:          1,
+    level:          startLevel,
     startTime:      Date.now(),
     lastCorrectMs:  null,
 
     // Arcade mode
     enemies:        [],
-    activeLetters:  [...LETTERS_BEGINNER],
-    spawnDelay:     1800, // ms between spawns
-    enemySpeed:     1.2,
+    activeLetters:  ltrs,
+    spawnDelay:     dly,
+    enemySpeed:     spd,
     spawnTimer:     null,
     animFrame:      null,
 
     // Sentence mode
-    sentenceActive: false,
-    sentenceReady:  false, // false = "get ready" showing
+    sentenceActive: startLevel >= 11,
+    sentenceReady:  false,
     sentenceText:   '',
     sentenceIdx:    0,
-    sentenceWrong:  false,
+    sentenceWrong:   false,
+    wrongStreak:     0,
+    wordSpawnTimer:  null,
+    activeWordEnemy: null,
   };
 }
 
@@ -668,7 +840,10 @@ function startGame() {
   // Clean up any previous session
   if (state) stopSession();
 
-  state = createState();
+  const lvlPicker = document.getElementById('levelPicker');
+  const startLevel = lvlPicker ? parseInt(lvlPicker.value) || 1 : 1;
+
+  state = createState(startLevel);
   state.running = true;
 
   startOverlay.style.display = 'none';
@@ -679,16 +854,26 @@ function startGame() {
   reopenGuide.style.display = 'none';
 
   updateHUD();
-  scheduleSpawn();
-  requestAnimationFrame(gameLoop);
+
+  if (state.sentenceActive) {
+    // Started at level 11+ — go straight to sentence mode
+    modeEl.textContent = state.level >= 16 ? 'Paragraph' : 'Sentence';
+    requestAnimationFrame(gameLoop);
+    enterSentenceMode();
+  } else {
+    scheduleSpawn();
+    requestAnimationFrame(gameLoop);
+  }
 }
 
 function stopSession() {
   state.running = false;
   clearTimeout(state.spawnTimer);
+  clearTimeout(state.wordSpawnTimer);
   cancelAnimationFrame(state.animFrame);
   state.enemies.forEach(e => e.el.remove());
   state.enemies = [];
+  state.activeWordEnemy = null;
 }
 
 function endGame() {
@@ -714,6 +899,16 @@ function endGame() {
         <div class="stat"><div class="stat-val">${wpm}</div><div class="stat-lbl">WPM</div></div>
         <div class="stat"><div class="stat-val">${state.level}</div><div class="stat-lbl">Level</div></div>
       </div>
+      <div style="margin:10px 0 4px;display:flex;align-items:center;justify-content:center;gap:10px;">
+        <label style="font-weight:800;font-size:14px;color:#374151;">Start at level:</label>
+        <select id="levelPicker" style="font-family:var(--font-ui);font-size:14px;font-weight:700;padding:6px 12px;border-radius:10px;border:2px solid #e5e7eb;background:#f9fafb;color:#1f2937;cursor:pointer;">
+          <option value="1">1 — Beginner</option><option value="2">2</option><option value="3">3</option>
+          <option value="4">4 — Advanced</option><option value="5">5</option><option value="6">6</option>
+          <option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
+          <option value="11">11 — Sentences</option><option value="12">12</option><option value="13">13</option>
+          <option value="16">16 — Paragraphs</option><option value="15">15</option><option value="20">20</option>
+        </select>
+      </div>
       <button class="btn" id="restartBtn">Play Again 🔄</button>
     </div>
   `;
@@ -732,15 +927,22 @@ function endGame() {
 function gameLoop() {
   if (!state.running) return;
 
-  if (!state.sentenceActive) {
-    for (let i = state.enemies.length - 1; i >= 0; i--) {
-      const enemy = state.enemies[i];
-      enemy.x -= enemy.speed;
-      enemy.el.style.left = enemy.x + 'px';
+  // Move all enemies (both arcade and sentence word enemies)
+  for (let i = state.enemies.length - 1; i >= 0; i--) {
+    const enemy = state.enemies[i];
+    enemy.x -= enemy.speed;
+    enemy.el.style.left = enemy.x + 'px';
 
-      if (enemy.x + 82 < 72) {
-        enemy.el.remove();
-        state.enemies.splice(i, 1);
+    if (enemy.x + 82 < 72) {
+      const wasSentenceEnemy = enemy.isSentenceEnemy;
+      enemy.el.remove();
+      state.enemies.splice(i, 1);
+      if (wasSentenceEnemy) {
+        state.activeWordEnemy = null;
+        handleMiss();
+        // Respawn the same character so the sentence can continue
+        if (state.running && state.sentenceActive) spawnNextWordEnemy();
+      } else {
         handleMiss();
       }
     }
@@ -757,7 +959,7 @@ function scheduleSpawn() {
 
   spawnEnemy();
   state.spawnTimer = setTimeout(() => {
-    if (state.running) scheduleSpawn();
+    if (state.running && !state.sentenceActive) scheduleSpawn();
   }, state.spawnDelay + Math.random() * 400);
 }
 
@@ -829,16 +1031,18 @@ function handleArcadeHit(enemy, key) {
 function enterSentenceMode() {
   state.sentenceActive = true;
 
-  // Clear remaining enemies
+  // Clear remaining enemies & timers
   state.enemies.forEach(e => e.el.remove());
   state.enemies = [];
   clearTimeout(state.spawnTimer);
+  clearTimeout(state.wordSpawnTimer);
 
-  const useParagraph = state.level >= 14;
+  const useParagraph = state.level >= 16;
   const pool = useParagraph ? PARAGRAPHS : SENTENCES;
   state.sentenceText = pool[Math.floor(Math.random() * pool.length)];
   state.sentenceIdx  = 0;
   state.sentenceWrong = false;
+  state.activeWordEnemy = null; // the single on-screen target enemy
 
   modeEl.textContent = useParagraph ? 'Paragraph' : 'Sentence';
 
@@ -850,7 +1054,43 @@ function enterSentenceMode() {
   setTimeout(() => {
     state.sentenceReady = true;
     renderSentence();
+    spawnNextWordEnemy();
   }, 2000);
+}
+
+// Spawn exactly one enemy showing the current target character.
+// Called after each correct keystroke and on sentence start.
+function spawnNextWordEnemy() {
+  if (!state.running || !state.sentenceActive) return;
+
+  // Skip spaces — advance sentenceIdx past them automatically
+  while (state.sentenceIdx < state.sentenceText.length &&
+         state.sentenceText[state.sentenceIdx] === ' ') {
+    state.sentenceIdx++;
+  }
+
+  if (state.sentenceIdx >= state.sentenceText.length) return; // sentence done
+
+  const letter = state.sentenceText[state.sentenceIdx];
+  const face   = ENEMY_FACES[Math.floor(Math.random() * ENEMY_FACES.length)];
+  const lane   = LANES[Math.floor(Math.random() * LANES.length)];
+
+  const el = document.createElement('div');
+  el.className = 'enemy sentence-enemy';
+  el.innerHTML = `
+    <div class="face">${face}</div>
+    <div class="letter">${escapeHtml(letter)}</div>
+    <div class="hint">type me!</div>
+    <div class="enemy-hp"><div class="enemy-hp-inner" style="width:100%"></div></div>
+  `;
+  el.style.top  = (lane - 41) + 'px';
+  el.style.left = window.innerWidth + 'px';
+  gameEl.appendChild(el);
+
+  const speed = state.enemySpeed + Math.random() * 0.4;
+  const enemyObj = { el, letter, x: window.innerWidth, speed, isSentenceEnemy: true };
+  state.enemies.push(enemyObj);
+  state.activeWordEnemy = enemyObj;
 }
 
 function renderSentence() {
@@ -882,12 +1122,28 @@ function handleSentenceKey(key) {
   if (key === expected) {
     state.correctTyped++;
     state.sentenceWrong = false;
+    state.wrongStreak = 0;
     state.sentenceIdx++;
     state.combo++;
     state.score += 5 + Math.floor(state.combo * 0.5);
     highlightKey(key.toLowerCase(), 'correct');
     jumpPlayer();
     bumpCombo();
+
+    // Zap the active word enemy
+    if (state.activeWordEnemy) {
+      const ae = state.activeWordEnemy;
+      popEffect(ae.x, parseInt(ae.el.style.top));
+      ae.el.remove();
+      state.enemies = state.enemies.filter(e => e !== ae);
+      state.activeWordEnemy = null;
+    }
+
+    // Skip any spaces in the sentence text
+    while (state.sentenceIdx < state.sentenceText.length &&
+           state.sentenceText[state.sentenceIdx] === ' ') {
+      state.sentenceIdx++;
+    }
 
     if (state.sentenceIdx >= state.sentenceText.length) {
       // Sentence complete!
@@ -896,21 +1152,31 @@ function handleSentenceKey(key) {
       updateHUD();
       checkLevelUp();
 
-      // Small pause then next sentence
       sentencePanel.innerHTML = '<span style="color:#16a34a;font-size:28px;">✅ Perfect!</span>';
+      state.enemies.forEach(e => e.el.remove());
+      state.enemies = [];
+      state.activeWordEnemy = null;
       setTimeout(() => {
-        // Stay in sentence mode but pick a new text
         enterSentenceMode();
       }, 1200);
       return;
     }
+
+    // Spawn the next target enemy immediately
+    spawnNextWordEnemy();
   } else {
-    // Wrong key
+    // Wrong key — after 3 consecutive wrong presses lose a life
     state.sentenceWrong = true;
+    state.wrongStreak = (state.wrongStreak || 0) + 1;
     state.combo = 0;
     highlightKey(key.toLowerCase(), 'wrong');
     shakePlayer();
     bumpCombo();
+
+    if (state.wrongStreak >= 3) {
+      state.wrongStreak = 0;
+      handleMiss();
+    }
   }
 
   updateHUD();
@@ -927,8 +1193,8 @@ function checkLevelUp() {
   state.level = newLevel;
 
   // Difficulty scaling
-  state.enemySpeed = 1.2 + (state.level - 1) * 0.22;
-  state.spawnDelay = Math.max(600, 1800 - (state.level - 1) * 100);
+  state.enemySpeed = 1.0 + (state.level - 1) * 0.12;
+  state.spawnDelay = Math.max(700, 2200 - (state.level - 1) * 80);
 
   // Unlock advanced characters at level 4
   if (state.level === 4) {
