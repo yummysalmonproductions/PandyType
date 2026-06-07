@@ -1116,6 +1116,15 @@ function renderSentence() {
 function handleSentenceKey(key) {
   if (!state.sentenceReady) return;
 
+  // Auto-advance past any spaces (they are never shown as enemies)
+  while (state.sentenceIdx < state.sentenceText.length &&
+         state.sentenceText[state.sentenceIdx] === ' ') {
+    state.sentenceIdx++;
+  }
+
+  // If the player pressed space themselves, just ignore it silently
+  if (key === ' ') { renderSentence(); return; }
+
   const expected = state.sentenceText[state.sentenceIdx];
   state.totalTyped++;
 
